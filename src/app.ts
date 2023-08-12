@@ -22,13 +22,17 @@
 //   }
 
 import express, { NextFunction } from "express";
+import rootRoute from "./routes/root";
 import todoRoutes from "./routes/todos";
+
 import { json } from "body-parser";
 
 const app = express();
 
 //use body parser as middleware in express app
 app.use(json());
+
+app.use("/", rootRoute);
 
 app.use("/todos", todoRoutes);
 
@@ -43,4 +47,5 @@ app.use(
     res.status(500).json({ message: err.message });
   }
 );
+console.log("listening on 3000");
 app.listen(3000);

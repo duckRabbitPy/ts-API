@@ -5,8 +5,7 @@ import {
   updateToDo,
   deleteToDo,
 } from "../controllers/todos";
-
-const router = Router();
+import { router } from "./root";
 
 router.post("/", createToDo);
 
