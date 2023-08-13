@@ -2,11 +2,13 @@ import { RequestHandler, Request } from "express";
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
 import * as Pg from "@sqlfx/pg";
-import { parseTodo, Todo, ToDoSchema } from "../models/todos";
+import { parseTodo, ToDoSchema } from "../models/todos";
 import { Config } from "effect";
 import * as Schema from "@effect/schema/Schema";
-import { ParseError } from "@effect/schema/ParseResult";
-import { ParseOptions } from "@effect/schema/AST";
+import {
+  getBodyTextFromRequest,
+  getIdFromRequest,
+} from "./validation/requests";
 
 const PgLive = Pg.makeLayer({
   database: Config.succeed("effect_pg_dev"),
@@ -51,62 +53,44 @@ export const getToDo: RequestHandler = (req, res, next) => {
 };
 
 export const updateToDo: RequestHandler<{ id: string }> = (req, res, next) => {
-  const todoID = req.params.id;
-  const updatedText = (req.body as { text: string }).text;
+  const updateResolver = (sql: Pg.PgClient, id: number, text: string) =>
+    sql
+      .resolver("updateItem", {
+        request: Schema.struct({
+          id: Schema.number,
+          text: Schema.string,
+        }),
+        result: ToDoSchema,
+        run: (requests) =>
+          sql`
+      INSERT INTO todos (id, text)
+        VALUES (${requests[0].id}, ${requests[0].text})
+        ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text
+        RETURNING *`,
+      })
+      .execute({ id, text });
 
-  const updateItem = (id: string, text: string) =>
+  const updateItem = (id: number, text: string) =>
     pipe(
       Pg.tag,
-      Effect.flatMap(
-        (sql) => sql`INSERT INTO todos (id, text)
-        VALUES (${id}, ${text})
-        ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text
-        RETURNING *`
-      ),
-      Effect.map((todos) => todos.map((todo) => parseTodo(todo))),
-      Effect.flatMap((effectArr) => Effect.all(effectArr)),
+      Effect.flatMap((sql) => updateResolver(sql, id, text)),
       Effect.flatMap((todos) => Effect.succeed(res.json({ todos: todos })))
     );
 
   pipe(
-    updateItem(todoID, updatedText),
+    Effect.zipWith(
+      getIdFromRequest(req),
+      getBodyTextFromRequest(req),
+      (id, text) => ({ id, text })
+    ),
+    Effect.flatMap(({ id, text }) => updateItem(id, text)),
     Effect.provideLayer(PgLive),
     Effect.runPromise
   );
 };
 
-// export const deleteToDoOriginal: RequestHandler<{ id: string }> = (
-//   req,
-//   res,
-//   next
-// ) => {
-//   const todoID = req.params.id;
-
-//   const deleteItem = (id: string) =>
-//     pipe(
-//       Pg.tag,
-//       Effect.flatMap(
-//         (sql) => sql`DELETE FROM todos WHERE id=${id} RETURNING *`
-//       ),
-//       Effect.map((todos) => todos.map((todo) => parseTodo(todo))),
-//       Effect.flatMap((effectArr) => Effect.all(effectArr)),
-//       Effect.flatMap((todos) =>
-//         Effect.succeed(res.json({ message: "todo deleted", todos: todos }))
-//       )
-//     );
-
-//   pipe(deleteItem(todoID), Effect.provideLayer(PgLive), Effect.runPromise);
-// };
-
 export const deleteToDo: RequestHandler<{ id: string }> = (req, res, next) => {
   const todoID = Number(req.params.id);
-
-  const getIdFromRequest = (
-    req: Request
-  ): Effect.Effect<never, Error, number> =>
-    Number.isInteger(Number(req.params?.id))
-      ? Effect.succeed(Number(req.params?.id))
-      : Effect.fail(new Error("Id cannot be converted to number"));
 
   const deleteResolver = (sql: Pg.PgClient, id: number) =>
     sql
