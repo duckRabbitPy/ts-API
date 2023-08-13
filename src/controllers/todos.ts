@@ -2,8 +2,11 @@ import { RequestHandler } from "express";
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
 import * as Pg from "@sqlfx/pg";
-import { parseTodo } from "../models/todos";
+import { parseTodo, Todo, ToDoSchema } from "../models/todos";
 import { Config } from "effect";
+import * as Schema from "@effect/schema/Schema";
+import { ParseError } from "@effect/schema/ParseResult";
+import { ParseOptions } from "@effect/schema/AST";
 
 const PgLive = Pg.makeLayer({
   database: Config.succeed("effect_pg_dev"),
@@ -72,21 +75,53 @@ export const updateToDo: RequestHandler<{ id: string }> = (req, res, next) => {
   );
 };
 
+// export const deleteToDoOriginal: RequestHandler<{ id: string }> = (
+//   req,
+//   res,
+//   next
+// ) => {
+//   const todoID = req.params.id;
+
+//   const deleteItem = (id: string) =>
+//     pipe(
+//       Pg.tag,
+//       Effect.flatMap(
+//         (sql) => sql`DELETE FROM todos WHERE id=${id} RETURNING *`
+//       ),
+//       Effect.map((todos) => todos.map((todo) => parseTodo(todo))),
+//       Effect.flatMap((effectArr) => Effect.all(effectArr)),
+//       Effect.flatMap((todos) =>
+//         Effect.succeed(res.json({ message: "todo deleted", todos: todos }))
+//       )
+//     );
+
+//   pipe(deleteItem(todoID), Effect.provideLayer(PgLive), Effect.runPromise);
+// };
+
 export const deleteToDo: RequestHandler<{ id: string }> = (req, res, next) => {
   const todoID = req.params.id;
 
-  const deleteItem = (id: string) =>
-    pipe(
+  const deleteResolver = (sql: Pg.PgClient) =>
+    sql
+      .resolver("deleteItem", {
+        request: Schema.number,
+        result: ToDoSchema,
+        run: (requests) =>
+          sql`
+        DELETE FROM todos WHERE id=${sql(requests)} RETURNING *
+      `,
+      })
+      .execute(Number(todoID));
+
+  const deleteItem = () => {
+    return pipe(
       Pg.tag,
-      Effect.flatMap(
-        (sql) => sql`DELETE FROM todos WHERE id=${id} RETURNING *`
-      ),
-      Effect.map((todos) => todos.map((todo) => parseTodo(todo))),
-      Effect.flatMap((effectArr) => Effect.all(effectArr)),
+      Effect.flatMap((sql) => deleteResolver(sql)),
       Effect.flatMap((todos) =>
         Effect.succeed(res.json({ message: "todo deleted", todos: todos }))
       )
     );
+  };
 
-  pipe(deleteItem(todoID), Effect.provideLayer(PgLive), Effect.runPromise);
+  pipe(deleteItem(), Effect.provideLayer(PgLive), Effect.runPromise);
 };
