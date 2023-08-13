@@ -1,4 +1,4 @@
-import { RequestHandler } from "express";
+import { RequestHandler, Request } from "express";
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
 import * as Pg from "@sqlfx/pg";
@@ -99,9 +99,16 @@ export const updateToDo: RequestHandler<{ id: string }> = (req, res, next) => {
 // };
 
 export const deleteToDo: RequestHandler<{ id: string }> = (req, res, next) => {
-  const todoID = req.params.id;
+  const todoID = Number(req.params.id);
 
-  const deleteResolver = (sql: Pg.PgClient) =>
+  const getIdFromRequest = (
+    req: Request
+  ): Effect.Effect<never, Error, number> =>
+    Number.isInteger(Number(req.params?.id))
+      ? Effect.succeed(Number(req.params?.id))
+      : Effect.fail(new Error("Id cannot be converted to number"));
+
+  const deleteResolver = (sql: Pg.PgClient, id: number) =>
     sql
       .resolver("deleteItem", {
         request: Schema.number,
@@ -111,17 +118,22 @@ export const deleteToDo: RequestHandler<{ id: string }> = (req, res, next) => {
         DELETE FROM todos WHERE id=${sql(requests)} RETURNING *
       `,
       })
-      .execute(Number(todoID));
+      .execute(id);
 
-  const deleteItem = () => {
+  const deleteItem = (id: number) => {
     return pipe(
       Pg.tag,
-      Effect.flatMap((sql) => deleteResolver(sql)),
+      Effect.flatMap((sql) => deleteResolver(sql, id)),
       Effect.flatMap((todos) =>
         Effect.succeed(res.json({ message: "todo deleted", todos: todos }))
       )
     );
   };
 
-  pipe(deleteItem(), Effect.provideLayer(PgLive), Effect.runPromise);
+  pipe(
+    getIdFromRequest(req),
+    Effect.flatMap((id) => deleteItem(id)),
+    Effect.provideLayer(PgLive),
+    Effect.runPromise
+  );
 };
