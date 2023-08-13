@@ -22,8 +22,7 @@
 //   }
 
 import express, { NextFunction } from "express";
-import rootRoute from "./routes/root";
-import todoRoutes from "./routes/todos";
+import { todoRouter } from "./routes/todos";
 
 import { json } from "body-parser";
 
@@ -32,9 +31,11 @@ const app = express();
 //use body parser as middleware in express app
 app.use(json());
 
-app.use("/", rootRoute);
+app.get("/", (req, res) => {
+  res.send("This is the root route.");
+});
 
-app.use("/todos", todoRoutes);
+app.use("/todos", todoRouter);
 
 //error handling middleware
 app.use(

@@ -5,14 +5,15 @@ import {
   updateToDo,
   deleteToDo,
 } from "../controllers/todos";
-import { router } from "./root";
 
-router.post("/", createToDo);
+const todoRouter = Router();
 
-router.get("/", getToDo);
+todoRouter.post("/", createToDo);
 
-router.patch("/:id", updateToDo);
+todoRouter.get("/", getToDo);
 
-router.delete("/:id", deleteToDo);
+todoRouter.patch("/:id", updateToDo);
 
-export default router;
+todoRouter.delete("/:id", deleteToDo);
+
+export { todoRouter };
