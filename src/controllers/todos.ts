@@ -8,18 +8,31 @@ import { Config } from "effect";
 
 const TODOs: ToDo[] = [];
 
+const PgLive = Pg.makeLayer({
+  database: Config.succeed("effect_pg_dev"),
+});
+
 export const createToDo: RequestHandler = (req, res, next) => {
   const text = (req.body as { text: string }).text;
-  const newToDo = new ToDo(Math.random().toString().slice(0, 3), text);
-  TODOs.push(newToDo);
-  res.status(201).json({ message: "created Todo", newToDo: newToDo });
+  console.log("body", req.body);
+  const insertTodo = (text: string) =>
+    pipe(
+      Pg.tag,
+      Effect.flatMap(
+        (sql) =>
+          sql`INSERT INTO todos (id, text) VALUES (${
+            Math.floor(Math.random() * 100) + 1
+          }, ${text}) RETURNING *`
+      ),
+      Effect.map((todos) => todos.map((todo) => parseTodo(todo))),
+      Effect.flatMap((effectArr) => Effect.all(effectArr)),
+      Effect.flatMap((todos) => Effect.succeed(res.json({ todos: todos })))
+    );
+
+  pipe(insertTodo(text), Effect.provideLayer(PgLive), Effect.runPromise);
 };
 
 export const getToDo: RequestHandler = (req, res, next) => {
-  const PgLive = Pg.makeLayer({
-    database: Config.succeed("effect_pg_dev"),
-  });
-
   const selectAllTodos = pipe(
     Pg.tag,
     Effect.flatMap(
