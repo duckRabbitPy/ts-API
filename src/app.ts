@@ -1,26 +1,3 @@
-//SET-UP
-//npm install typescript
-//npm install @types/node
-//npm install @types/express
-//npx tsc --init
-//npx tsc - w
-//Use insomnia to test http requests
-//http://localhost:3000/todos
-
-// Tsconfig
-// {
-//     "compilerOptions": {
-//       "target": "es2018",
-//       "module": "commonjs",
-//       "moduleResolution": "node",
-//       "outDir": "./dist",
-//       "rootDir": "./src",
-//       "strict": true,
-//       "esModuleInterop": true,
-//       "forceConsistentCasingInFileNames": true
-//     }
-//   }
-
 import express, { NextFunction } from "express";
 import { todoRouter } from "./routes/todos";
 
@@ -30,6 +7,7 @@ const app = express();
 
 //use body parser as middleware in express app
 app.use(json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("This is the root route.");
