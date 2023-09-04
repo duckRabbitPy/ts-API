@@ -2,27 +2,26 @@
   "dependencies": {
     "@effect/schema": "^0.33.1",
     "@effect/stream": "^0.34.0",
-    "@sqlfx/pg": "^0.14.1",
-    "@sqlfx/sql": "^0.16.1",
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.4",
     "body-parser": "^1.19.1",
     "effect": "2.0.0-next.19",
     "express": "^4.17.2",
-    "nodemon": "^2.0.15"
+    "pg": "^8.11.3"
   },
   "name": "ts-api",
   "version": "1.0.0",
   "description": "rest api",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon dist/app.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.4.2",
+    "@types/pg": "^8.10.2",
+    "bun-types": "^0.8.1",
     "typescript": "^5.1.6"
   }
 }
