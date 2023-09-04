@@ -2,10 +2,6 @@ import { RequestHandler } from "express";
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
 import {
-  getBodyTextFromRequest,
-  getIdFromRequest,
-} from "../validation/requests";
-import {
   createTodoQuery,
   deleteByIdQuery,
   selectAllTodosQuery,
@@ -13,14 +9,17 @@ import {
   updateTodosQuery,
 } from "./sqlQueries";
 import {
+  safeParseNonEmptyString,
+  safeParseNumber,
   safeParseOrderParam,
   safeParseSortByParam,
 } from "../../models/queryParams";
 import { parseTodo, parseTodoArray } from "../../models/todos";
+import { getFilterParamsFromRequest } from "../utils/filter";
 
 export const createToDo: RequestHandler = (req, res) => {
   const createItem = pipe(
-    getBodyTextFromRequest(req),
+    safeParseNonEmptyString(req.body?.text),
     Effect.flatMap((text) => createTodoQuery(text)),
     Effect.flatMap((res) => parseTodo(res)),
     Effect.flatMap((todo) => Effect.succeed(res.status(201).json({ todo })))
@@ -30,6 +29,8 @@ export const createToDo: RequestHandler = (req, res) => {
 };
 
 export const getAllToDos: RequestHandler = (req, res) => {
+  const filters = getFilterParamsFromRequest(req);
+
   const safeParams = {
     sortBy: safeParseSortByParam(req.query.sortBy).pipe(
       Effect.orElseSucceed(() => "id" as const)
@@ -37,11 +38,14 @@ export const getAllToDos: RequestHandler = (req, res) => {
     order: safeParseOrderParam(req.query.order).pipe(
       Effect.orElseSucceed(() => "asc" as const)
     ),
+    filters: Effect.succeed(filters),
   };
 
   const selectAllItems = pipe(
     Effect.all(safeParams),
-    Effect.flatMap(({ sortBy, order }) => selectAllTodosQuery(sortBy, order)),
+    Effect.flatMap(({ sortBy, order, filters }) =>
+      selectAllTodosQuery(sortBy, order, filters)
+    ),
     Effect.flatMap((res) => parseTodoArray(res)),
     Effect.flatMap((todos) => Effect.succeed(res.status(200).json({ todos })))
   );
@@ -51,7 +55,7 @@ export const getAllToDos: RequestHandler = (req, res) => {
 
 export const getToDo: RequestHandler = (req, res) => {
   const selectItem = pipe(
-    getIdFromRequest(req),
+    safeParseNumber(req.params?.id),
     Effect.flatMap((id) => selectTodoByIdQuery(id)),
     Effect.flatMap((res) => parseTodo(res)),
     Effect.flatMap((todo) => Effect.succeed(res.status(200).json({ todo })))
@@ -62,7 +66,7 @@ export const getToDo: RequestHandler = (req, res) => {
 
 export const deleteToDo: RequestHandler = (req, res) => {
   const deleteItem = pipe(
-    getIdFromRequest(req),
+    safeParseNumber(req.params?.id),
     Effect.flatMap((id) => deleteByIdQuery(id)),
     Effect.flatMap(() => Effect.succeed(res.status(204).json({})))
   );
@@ -72,8 +76,8 @@ export const deleteToDo: RequestHandler = (req, res) => {
 
 export const updateToDo: RequestHandler = (req, res) => {
   const safeParams = {
-    id: getIdFromRequest(req),
-    text: getBodyTextFromRequest(req),
+    id: safeParseNumber(req.params?.id),
+    text: safeParseNonEmptyString(req.body?.text),
   };
 
   const updateItem = pipe(

@@ -1,6 +1,7 @@
 import * as Effect from "@effect/io/Effect";
-import { sortBy, sortOrder } from "../../models/queryParams";
+import { SortBy, SortOrder } from "../../models/queryParams";
 import { pool } from "../../db/connection";
+import QueryString from "qs";
 
 export const createTodoQuery = (text: string) => {
   const create = async () => {
@@ -23,11 +24,32 @@ export const createTodoQuery = (text: string) => {
   });
 };
 
-export const selectAllTodosQuery = (sortBy: sortBy, order: sortOrder) => {
+type tempTypeFilters = {
+  id: {
+    predicateOperator: "=" | ">" | ">=" | "<=";
+    predicateValue: number;
+  } | null;
+  text:
+    | string
+    | string[]
+    | QueryString.ParsedQs
+    | QueryString.ParsedQs[]
+    | undefined;
+};
+
+export const selectAllTodosQuery = (
+  sortBy: SortBy,
+  order: SortOrder,
+  filters: tempTypeFilters
+) => {
   const selectAll = async () => {
+    const idFilterQuery = !!filters.id
+      ? `WHERE id ${filters.id?.predicateOperator} ${filters.id?.predicateValue}`
+      : ``;
+
     try {
       const result = await pool.query(
-        `SELECT id, text FROM todos ORDER BY ${sortBy} ${order}`
+        `SELECT id, text FROM todos ${idFilterQuery} ORDER BY ${sortBy} ${order}`
       );
       return result.rows;
     } catch (error) {
