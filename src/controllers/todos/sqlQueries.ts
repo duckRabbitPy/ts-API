@@ -1,7 +1,6 @@
 import * as Effect from "@effect/io/Effect";
 import { SortBy, SortOrder } from "../../models/queryParams";
 import { pool } from "../../db/connection";
-import QueryString from "qs";
 
 export const createTodoQuery = (text: string) => {
   const create = async () => {
@@ -26,15 +25,36 @@ export const createTodoQuery = (text: string) => {
 
 type tempTypeFilters = {
   id: {
-    predicateOperator: "=" | ">" | ">=" | "<=";
+    numericalOperator: "=" | ">" | ">=" | "<=";
     predicateValue: number;
   } | null;
-  text:
-    | string
-    | string[]
-    | QueryString.ParsedQs
-    | QueryString.ParsedQs[]
-    | undefined;
+  text: {
+    stringOperatorCallback:
+      | ((a: string) => `LIKE '%${string}%'`)
+      | ((a: string) => `LIKE '${string}%'`)
+      | ((a: string) => `LIKE '%${string}'`)
+      | ((a: string) => `= '${string}'`);
+    predicateValue: string;
+  } | null;
+};
+
+const constructWhereClause = (filters: tempTypeFilters) => {
+  const idFilterQuery = !!filters.id
+    ? `id ${filters.id?.numericalOperator} ${filters.id?.predicateValue}`
+    : null;
+
+  const textFilterQuery = !!filters.text
+    ? `text ${filters.text.stringOperatorCallback(filters.text.predicateValue)}`
+    : null;
+
+  if (idFilterQuery && textFilterQuery)
+    return `WHERE ${idFilterQuery} AND ${textFilterQuery}`;
+
+  if (idFilterQuery) return `WHERE ${idFilterQuery}`;
+
+  if (textFilterQuery) return `WHERE ${textFilterQuery}`;
+
+  return ``;
 };
 
 export const selectAllTodosQuery = (
@@ -43,13 +63,11 @@ export const selectAllTodosQuery = (
   filters: tempTypeFilters
 ) => {
   const selectAll = async () => {
-    const idFilterQuery = !!filters.id
-      ? `WHERE id ${filters.id?.predicateOperator} ${filters.id?.predicateValue}`
-      : ``;
-
     try {
       const result = await pool.query(
-        `SELECT id, text FROM todos ${idFilterQuery} ORDER BY ${sortBy} ${order}`
+        `SELECT id, text FROM todos ${constructWhereClause(
+          filters
+        )} ORDER BY ${sortBy} ${order}`
       );
       return result.rows;
     } catch (error) {

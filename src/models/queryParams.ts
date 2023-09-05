@@ -19,15 +19,15 @@ export const safeParseNonEmptyString = Schema.parse(
   Schema.string.pipe(Schema.minLength(1))
 );
 
-export const predicateOperatorSqlMapping = {
+export const numericalOperatorSqlMapping = {
   eq: "=",
   gt: ">",
   gte: ">=",
   lt: ">",
   lte: "<=",
-} as PredicateOperatorMap;
+} as NumericalOperatorMap;
 
-export const predicateOperatorMapSchema = Schema.struct({
+export const numericalOperatorMapSchema = Schema.struct({
   eq: Schema.literal("="),
   gt: Schema.literal(">"),
   gte: Schema.literal(">="),
@@ -35,8 +35,23 @@ export const predicateOperatorMapSchema = Schema.struct({
   lte: Schema.literal("<="),
 });
 
-export const predicateOperator = Schema.keyof(predicateOperatorMapSchema);
-export type PredicateOperator = Schema.To<typeof predicateOperator>;
+export const numericalOperator = Schema.keyof(numericalOperatorMapSchema);
 
-export type PredicateOperatorMap = Schema.To<typeof predicateOperatorMapSchema>;
-export const safeParsePredicateOperator = Schema.parse(predicateOperator);
+export type NumericalOperatorMap = Schema.To<typeof numericalOperatorMapSchema>;
+export const safeParseNumericalOperator = Schema.parse(numericalOperator);
+
+export const stringOperatorSqlMapping = {
+  contains: (a: string) => `LIKE '%${a}%'` as const,
+  startsWith: (a: string) => `LIKE '${a}%'` as const,
+  endsWith: (a: string) => `LIKE '%${a}'` as const,
+  eq: (a: string) => `= '${a}'` as const,
+} as const;
+
+const stringOperatorSchema = Schema.union(
+  Schema.literal("contains"),
+  Schema.literal("startsWith"),
+  Schema.literal("endsWith"),
+  Schema.literal("eq")
+);
+
+export const safeParseStringOperator = Schema.parse(stringOperatorSchema);
