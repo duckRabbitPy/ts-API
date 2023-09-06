@@ -16,16 +16,20 @@ import {
 } from "../../models/queryParams";
 import { parseTodo, parseTodoArray } from "../../models/todos";
 import { getFilterParamsFromRequest } from "../utils/filter";
+import { resolveResponse } from "../utils/resolveResponse";
 
 export const createToDo: RequestHandler = (req, res) => {
-  const createItem = pipe(
+  return pipe(
     safeParseNonEmptyString(req.body?.text),
     Effect.flatMap((text) => createTodoQuery(text)),
-    Effect.flatMap((res) => parseTodo(res)),
-    Effect.flatMap((todo) => Effect.succeed(res.status(201).json({ todo })))
+    Effect.flatMap((result) => parseTodo(result)),
+    (finalEffect) =>
+      resolveResponse({
+        finalEffect,
+        response: res,
+        successStatus: 201,
+      })
   );
-
-  return pipe(createItem, Effect.runPromise);
 };
 
 export const getAllToDos: RequestHandler = (req, res) => {
@@ -41,51 +45,65 @@ export const getAllToDos: RequestHandler = (req, res) => {
     filters: Effect.succeed(filters),
   };
 
-  const selectAllItems = pipe(
+  return pipe(
     Effect.all(safeParams),
     Effect.flatMap(({ sortBy, order, filters }) =>
       selectAllTodosQuery(sortBy, order, filters)
     ),
-    Effect.flatMap((res) => parseTodoArray(res)),
-    Effect.flatMap((todos) => Effect.succeed(res.status(200).json({ todos })))
+    Effect.flatMap((result) => parseTodoArray(result)),
+    (finalEffect) =>
+      resolveResponse({
+        finalEffect,
+        response: res,
+        successStatus: 200,
+      })
   );
-
-  return pipe(selectAllItems, Effect.runPromise);
 };
 
 export const getToDo: RequestHandler = (req, res) => {
-  const selectItem = pipe(
-    safeParseNumber(req.params?.id),
+  console.log(req.params?.ids);
+  return pipe(
+    safeParseNumber(Number(req.params?.id)),
     Effect.flatMap((id) => selectTodoByIdQuery(id)),
-    Effect.flatMap((res) => parseTodo(res)),
-    Effect.flatMap((todo) => Effect.succeed(res.status(200).json({ todo })))
+    Effect.flatMap((result) => parseTodo(result)),
+    (finalEffect) =>
+      resolveResponse({
+        finalEffect,
+        response: res,
+        successStatus: 200,
+      })
   );
-
-  return pipe(selectItem, Effect.runPromise);
 };
 
+// todo return more specific not found err
 export const deleteToDo: RequestHandler = (req, res) => {
-  const deleteItem = pipe(
-    safeParseNumber(req.params?.id),
+  return pipe(
+    safeParseNumber(Number(req.params?.id)),
     Effect.flatMap((id) => deleteByIdQuery(id)),
-    Effect.flatMap(() => Effect.succeed(res.status(204).json({})))
+    (finalEffect) =>
+      resolveResponse({
+        finalEffect,
+        response: res,
+        successStatus: 204,
+      })
   );
-
-  return pipe(deleteItem, Effect.runPromise);
 };
 
 export const updateToDo: RequestHandler = (req, res) => {
   const safeParams = {
-    id: safeParseNumber(req.params?.id),
+    id: safeParseNumber(Number(req.params?.id)),
     text: safeParseNonEmptyString(req.body?.text),
   };
 
-  const updateItem = pipe(
+  return pipe(
     Effect.all(safeParams),
     Effect.flatMap(({ id, text }) => updateTodosQuery(id, text)),
     Effect.flatMap((res) => parseTodo(res)),
-    Effect.flatMap((todo) => Effect.succeed(res.status(200).json({ todo })))
+    (finalEffect) =>
+      resolveResponse({
+        finalEffect,
+        response: res,
+        successStatus: 200,
+      })
   );
-
-  return pipe(updateItem, Effect.runPromise);
 };
