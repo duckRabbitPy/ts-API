@@ -1,13 +1,14 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
+import { safeParseNonEmptyString } from "../../models/common";
 import {
-  safeParseNonEmptyString,
   safeParseStringOperator,
   stringOperatorSqlMapping,
-} from "../../models/queryParams";
-import { parseColon } from "./filter";
+} from "../../models/queryParams/stringComparison";
 
-const parseFilterString = (filterString: string) => {
+import { parseColon } from "./common";
+
+const parseStringFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);
   const safeParams = {
     stringOperator: safeParseStringOperator(a),
@@ -28,7 +29,7 @@ const parseFilterString = (filterString: string) => {
 export const parseStringFilter = (maybeFilterString: unknown) => {
   return pipe(
     safeParseNonEmptyString(maybeFilterString),
-    Effect.flatMap((filterString) => parseFilterString(filterString)),
+    Effect.flatMap((filterString) => parseStringFilterString(filterString)),
     Effect.orElseSucceed(() => null),
     Effect.runSync
   );

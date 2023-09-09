@@ -1,6 +1,8 @@
 import * as Effect from "@effect/io/Effect";
-import { SortBy, SortOrder } from "../../models/queryParams";
+
 import { pool } from "../../db/connection";
+import { SortOrder } from "../../models/queryParams/order";
+import { SortBy } from "../../models/queryParams/sortBy";
 
 export const createTodoQuery = (text: string) => {
   const create = async () => {
@@ -36,25 +38,35 @@ type tempTypeFilters = {
       | ((a: string) => `= '${string}'`);
     predicateValue: string;
   } | null;
+  updated_at: {
+    dateOperator: "=" | ">";
+    predicateValue: string;
+  } | null;
 };
-
 const constructWhereClause = (filters: tempTypeFilters) => {
   const idFilterQuery = !!filters.id
     ? `id ${filters.id?.numericalOperator} ${filters.id?.predicateValue}`
-    : null;
+    : ``;
 
   const textFilterQuery = !!filters.text
     ? `text ${filters.text.stringOperatorCallback(filters.text.predicateValue)}`
-    : null;
+    : ``;
 
-  if (idFilterQuery && textFilterQuery)
-    return `WHERE ${idFilterQuery} AND ${textFilterQuery}`;
+  const dateFilterQuery = !!filters.updated_at
+    ? `updated_at ${filters.updated_at.dateOperator} '${filters.updated_at.predicateValue}'`
+    : ``;
 
-  if (idFilterQuery) return `WHERE ${idFilterQuery}`;
+  const filterQueries = [
+    idFilterQuery,
+    textFilterQuery,
+    dateFilterQuery,
+  ].filter(Boolean);
 
-  if (textFilterQuery) return `WHERE ${textFilterQuery}`;
+  if (filterQueries.length === 0) {
+    return ``;
+  }
 
-  return ``;
+  return `WHERE ${filterQueries.join(" AND ")}`;
 };
 
 export const selectAllTodosQuery = (
@@ -64,11 +76,17 @@ export const selectAllTodosQuery = (
 ) => {
   const selectAll = async () => {
     try {
-      const result = await pool.query(
-        `SELECT id, text FROM todos ${constructWhereClause(
+      console.log(
+        `SELECT id, text, updated_at FROM todos ${constructWhereClause(
           filters
         )} ORDER BY ${sortBy} ${order}`
       );
+      const result = await pool.query(
+        `SELECT id, text, updated_at FROM todos ${constructWhereClause(
+          filters
+        )} ORDER BY ${sortBy} ${order}`
+      );
+
       return result.rows;
     } catch (error) {
       throw error;
@@ -85,7 +103,7 @@ export const selectTodoByIdQuery = (id: number) => {
   const selectById = async () => {
     try {
       const result = await pool.query(
-        `SELECT id, text FROM todos WHERE id = $1`,
+        `SELECT id, text, updated_at FROM todos WHERE id = $1`,
         [id]
       );
       return result.rows[0];
@@ -119,8 +137,8 @@ export const updateTodosQuery = (id: number, text: string) => {
   const updateById = async () => {
     try {
       const result = await pool.query(
-        `INSERT INTO todos (id, text) VALUES ($1, $2)
-        ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text
+        `INSERT INTO todos (id, text, updated_at) VALUES ($1, $2, NOW())
+        ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text, updated_at = NOW()
         RETURNING *`,
         [id, text]
       );

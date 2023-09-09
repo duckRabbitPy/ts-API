@@ -8,15 +8,24 @@ import {
   selectTodoByIdQuery,
   updateTodosQuery,
 } from "./sqlQueries";
-import {
-  safeParseNonEmptyString,
-  safeParseNumber,
-  safeParseOrderParam,
-  safeParseSortByParam,
-} from "../../models/queryParams";
+import {} from "../../models/queryParams/numberComparison";
 import { parseTodo, parseTodoArray } from "../../models/todos";
-import { getFilterParamsFromRequest } from "../utils/filter";
+import { Request } from "express";
 import { resolveResponse } from "../utils/resolveResponse";
+import { safeParseSortByParam } from "../../models/queryParams/sortBy";
+import { safeParseOrderParam } from "../../models/queryParams/order";
+import { safeParseNonEmptyString, safeParseNumber } from "../../models/common";
+import { parseDateFilter } from "../utils/dateFilter";
+import { parseNumericalFilter } from "../utils/numericalFilter";
+import { parseStringFilter } from "../utils/stringFilter";
+
+export const getFilterParamsFromRequest = (req: Request) => {
+  return {
+    id: parseNumericalFilter(req.query?.id),
+    text: parseStringFilter(req.query?.text),
+    updated_at: parseDateFilter(req.query?.updated_at),
+  };
+};
 
 export const createToDo: RequestHandler = (req, res) => {
   return pipe(
@@ -61,7 +70,6 @@ export const getAllToDos: RequestHandler = (req, res) => {
 };
 
 export const getToDo: RequestHandler = (req, res) => {
-  console.log(req.params?.ids);
   return pipe(
     safeParseNumber(Number(req.params?.id)),
     Effect.flatMap((id) => selectTodoByIdQuery(id)),

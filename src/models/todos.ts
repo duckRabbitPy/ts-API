@@ -3,6 +3,7 @@ import * as Schema from "@effect/schema/Schema";
 export const ToDoSchema = Schema.struct({
   id: Schema.number,
   text: Schema.string,
+  updated_at: Schema.DateFromSelf,
 });
 
 export type Todo = Schema.To<typeof ToDoSchema>;
