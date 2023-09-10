@@ -1,7 +1,9 @@
 import express, { NextFunction } from "express";
-import { todoRouter } from "./routes/todos";
+import { todoRouter as todoRouterV1 } from "./routes/todos/todos_v1";
 
 import { json } from "body-parser";
+
+Bun.env.TZ = "UTC";
 
 const app = express();
 
@@ -10,10 +12,10 @@ app.use(json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-  res.send("This is the root route.");
+  res.send("This is the root route. See documentation for available endpoints");
 });
 
-app.use("/todos", todoRouter);
+app.use("/api-v1/todos", todoRouterV1);
 
 //error handling middleware
 app.use(

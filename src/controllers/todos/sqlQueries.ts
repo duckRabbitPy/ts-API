@@ -39,7 +39,7 @@ type tempTypeFilters = {
     predicateValue: string;
   } | null;
   updated_at: {
-    dateOperator: "=" | ">";
+    dateOperator: "=" | ">" | "<";
     predicateValue: string;
   } | null;
 };
@@ -72,17 +72,13 @@ const constructWhereClause = (filters: tempTypeFilters) => {
 export const selectAllTodosQuery = (
   sortBy: SortBy,
   order: SortOrder,
-  filters: tempTypeFilters
+  filters: tempTypeFilters,
+  definedFields: readonly string[]
 ) => {
   const selectAll = async () => {
     try {
-      console.log(
-        `SELECT id, text, updated_at FROM todos ${constructWhereClause(
-          filters
-        )} ORDER BY ${sortBy} ${order}`
-      );
       const result = await pool.query(
-        `SELECT id, text, updated_at FROM todos ${constructWhereClause(
+        `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
           filters
         )} ORDER BY ${sortBy} ${order}`
       );

@@ -18,6 +18,7 @@ import { safeParseNonEmptyString, safeParseNumber } from "../../models/common";
 import { parseDateFilter } from "../utils/dateFilter";
 import { parseNumericalFilter } from "../utils/numericalFilter";
 import { parseStringFilter } from "../utils/stringFilter";
+import { parseDefinedFields } from "../utils/common";
 
 export const getFilterParamsFromRequest = (req: Request) => {
   return {
@@ -52,12 +53,17 @@ export const getAllToDos: RequestHandler = (req, res) => {
       Effect.orElseSucceed(() => "asc" as const)
     ),
     filters: Effect.succeed(filters),
+    definedFields: parseDefinedFields(req.query.fields).pipe(
+      Effect.orElseSucceed(
+        () => ["id", "text", "updated_at"] as readonly string[]
+      )
+    ),
   };
 
   return pipe(
     Effect.all(safeParams),
-    Effect.flatMap(({ sortBy, order, filters }) =>
-      selectAllTodosQuery(sortBy, order, filters)
+    Effect.flatMap(({ sortBy, order, filters, definedFields }) =>
+      selectAllTodosQuery(sortBy, order, filters, definedFields)
     ),
     Effect.flatMap((result) => parseTodoArray(result)),
     (finalEffect) =>

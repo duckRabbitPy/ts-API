@@ -1,3 +1,5 @@
 bun --hot run src/app.ts
 
 \c effect_pg_dev
+
+ALTER DATABASE effect_pg_dev SET timezone TO 'UTC';

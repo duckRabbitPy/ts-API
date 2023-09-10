@@ -5,7 +5,7 @@ import {
   getAllToDos,
   getToDo,
   updateToDo,
-} from "../controllers/todos/todos";
+} from "../../controllers/todos/todos";
 
 const todoRouter = Router();
 

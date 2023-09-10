@@ -3,16 +3,21 @@ import * as Effect from "@effect/io/Effect";
 import { ParseError } from "@effect/schema/ParseResult";
 import { pipe } from "effect";
 
-// todo type properly
+// todo type properly (generically)
 type ResolveResponseInput = {
   finalEffect: Effect.Effect<
     never,
     ParseError | Error,
     | {
         readonly id: number;
-        readonly text: string;
+        readonly text?: string;
+        readonly updated_at?: Date;
       }
-    | readonly { readonly id: number; readonly text: string }[]
+    | readonly {
+        readonly id: number;
+        readonly text?: string;
+        updated_at?: Date;
+      }[]
     | void
   >;
   response: Response;
