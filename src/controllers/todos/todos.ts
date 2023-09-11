@@ -76,9 +76,20 @@ export const getAllToDos: RequestHandler = (req, res) => {
 };
 
 export const getToDo: RequestHandler = (req, res) => {
+  const safeParams = {
+    id: safeParseNumber(Number(req.params?.id)),
+    definedFields: parseDefinedFields(req.query.fields).pipe(
+      Effect.orElseSucceed(
+        () => ["id", "text", "updated_at"] as readonly string[]
+      )
+    ),
+  };
+
   return pipe(
-    safeParseNumber(Number(req.params?.id)),
-    Effect.flatMap((id) => selectTodoByIdQuery(id)),
+    Effect.all(safeParams),
+    Effect.flatMap(({ id, definedFields }) =>
+      selectTodoByIdQuery(id, definedFields)
+    ),
     Effect.flatMap((result) => parseTodo(result)),
     (finalEffect) =>
       resolveResponse({

@@ -50,8 +50,8 @@ export const resolveResponse = ({
         }
         return Effect.succeed(response.status(500).json(`Server error`));
       },
-      onSuccess: (todo) =>
-        Effect.succeed(response.status(successStatus).json({ todo })),
+      onSuccess: (todos) =>
+        Effect.succeed(response.status(successStatus).json({ todos })),
     }),
     Effect.runPromise
   );

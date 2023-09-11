@@ -52,9 +52,18 @@ const constructWhereClause = (filters: tempTypeFilters) => {
     ? `text ${filters.text.stringOperatorCallback(filters.text.predicateValue)}`
     : ``;
 
+  // microsecond interval added to account for postgres timestamp precision compared to javascript Date precision
   const dateFilterQuery = !!filters.updated_at
-    ? `updated_at ${filters.updated_at.dateOperator} '${filters.updated_at.predicateValue}'`
-    : ``;
+    ? `updated_at ${filters.updated_at.dateOperator} TIMESTAMP '${
+        filters.updated_at.predicateValue
+      }' ${
+        filters.updated_at.dateOperator === ">"
+          ? "+ INTERVAL '100 microseconds'"
+          : filters.updated_at.dateOperator === "<"
+          ? "- INTERVAL '100 microseconds'"
+          : ""
+      }`
+    : "";
 
   const filterQueries = [
     idFilterQuery,
@@ -77,6 +86,11 @@ export const selectAllTodosQuery = (
 ) => {
   const selectAll = async () => {
     try {
+      console.log(
+        `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
+          filters
+        )} ORDER BY ${sortBy} ${order}`
+      );
       const result = await pool.query(
         `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
           filters
@@ -95,11 +109,14 @@ export const selectAllTodosQuery = (
   });
 };
 
-export const selectTodoByIdQuery = (id: number) => {
+export const selectTodoByIdQuery = (
+  id: number,
+  definedFields: readonly string[]
+) => {
   const selectById = async () => {
     try {
       const result = await pool.query(
-        `SELECT id, text, updated_at FROM todos WHERE id = $1`,
+        `SELECT ${definedFields.join(",")} FROM todos WHERE id = $1`,
         [id]
       );
       return result.rows[0];
