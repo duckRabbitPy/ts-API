@@ -18,7 +18,8 @@ import { safeParseNonEmptyString, safeParseNumber } from "../../models/common";
 import { parseDateFilter } from "../utils/dateFilter";
 import { parseNumericalFilter } from "../utils/numericalFilter";
 import { parseStringFilter } from "../utils/stringFilter";
-import { parseDefinedFields } from "../utils/common";
+import { safeParseDefinedFields } from "../utils/definedFields";
+import { safeParsePagination } from "../utils/pagination";
 
 export const getFilterParamsFromRequest = (req: Request) => {
   return {
@@ -53,17 +54,23 @@ export const getAllToDos: RequestHandler = (req, res) => {
       Effect.orElseSucceed(() => "asc" as const)
     ),
     filters: Effect.succeed(filters),
-    definedFields: parseDefinedFields(req.query.fields).pipe(
+    definedFields: safeParseDefinedFields(req.query.fields).pipe(
       Effect.orElseSucceed(
         () => ["id", "text", "updated_at"] as readonly string[]
       )
+    ),
+    pagination: safeParsePagination(req).pipe(
+      Effect.orElseSucceed(() => ({
+        limit: 2,
+        offset: 0,
+      }))
     ),
   };
 
   return pipe(
     Effect.all(safeParams),
-    Effect.flatMap(({ sortBy, order, filters, definedFields }) =>
-      selectAllTodosQuery(sortBy, order, filters, definedFields)
+    Effect.flatMap(({ sortBy, order, filters, definedFields, pagination }) =>
+      selectAllTodosQuery(sortBy, order, filters, definedFields, pagination)
     ),
     Effect.flatMap((result) => parseTodoArray(result)),
     (finalEffect) =>
@@ -78,7 +85,7 @@ export const getAllToDos: RequestHandler = (req, res) => {
 export const getToDo: RequestHandler = (req, res) => {
   const safeParams = {
     id: safeParseNumber(Number(req.params?.id)),
-    definedFields: parseDefinedFields(req.query.fields).pipe(
+    definedFields: safeParseDefinedFields(req.query.fields).pipe(
       Effect.orElseSucceed(
         () => ["id", "text", "updated_at"] as readonly string[]
       )

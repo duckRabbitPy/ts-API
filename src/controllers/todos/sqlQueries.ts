@@ -82,19 +82,24 @@ export const selectAllTodosQuery = (
   sortBy: SortBy,
   order: SortOrder,
   filters: tempTypeFilters,
-  definedFields: readonly string[]
+  definedFields: readonly string[],
+  pagination: { limit: number; offset: number }
 ) => {
   const selectAll = async () => {
     try {
       console.log(
         `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
           filters
-        )} ORDER BY ${sortBy} ${order}`
+        )} ORDER BY ${sortBy} ${order} LIMIT ${pagination.limit} OFFSET ${
+          pagination.offset
+        }`
       );
       const result = await pool.query(
         `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
           filters
-        )} ORDER BY ${sortBy} ${order}`
+        )} ORDER BY ${sortBy} ${order} LIMIT ${pagination.limit} OFFSET ${
+          pagination.offset
+        }`
       );
 
       return result.rows;
