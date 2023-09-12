@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { pipe } from "@effect/data/Function";
-import {
-  safeParseNonEmptyString,
-  safeParseStringArray,
-} from "../../models/common";
+import * as Schema from "@effect/schema/Schema";
 
 export const parseColon = (filterString: string): [string, string] => {
   if (filterString.includes(":")) {
@@ -29,3 +26,12 @@ export const parseDefinedFields = (maybeDefinedFieldsString: unknown) => {
     )
   );
 };
+
+export const safeParseNumber = Schema.parse(
+  Schema.number.pipe(Schema.nonNaN())
+);
+export const safeParseNonEmptyString = Schema.parse(
+  Schema.string.pipe(Schema.minLength(1))
+);
+export const safeParseDate = Schema.parse(Schema.Date);
+export const safeParseStringArray = Schema.parse(Schema.array(Schema.string));

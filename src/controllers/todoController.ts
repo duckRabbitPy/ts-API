@@ -1,25 +1,27 @@
 import { RequestHandler } from "express";
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
+import {} from "./queryParams/filtering/number/numberComparison";
 import {
   createTodoQuery,
   deleteByIdQuery,
+  parseTodo,
+  parseTodoArray,
   selectAllTodosQuery,
   selectTodoByIdQuery,
+  Todo,
   updateTodosQuery,
-} from "./sqlQueries";
-import {} from "../../models/queryParams/numberComparison";
-import { parseTodo, parseTodoArray } from "../../models/todos";
-import { Request } from "express";
-import { resolveResponse } from "../utils/resolveResponse";
-import { safeParseSortByParam } from "../../models/queryParams/sortBy";
-import { safeParseOrderParam } from "../../models/queryParams/order";
-import { safeParseNonEmptyString, safeParseNumber } from "../../models/common";
-import { parseDateFilter } from "../utils/dateFilter";
-import { parseNumericalFilter } from "../utils/numericalFilter";
-import { parseStringFilter } from "../utils/stringFilter";
-import { safeParseDefinedFields } from "../utils/definedFields";
-import { safeParsePagination } from "../utils/pagination";
+} from "../models/todos";
+import { Request, Response } from "express";
+import { safeParseSortByParam } from "./queryParams/sorting/sortBy";
+import { safeParseOrderParam } from "./queryParams/sorting/order";
+import { parseDateFilter } from "./queryParams/filtering/date/dateFilter";
+import { parseNumericalFilter } from "./queryParams/filtering/number/numericalFilter";
+import { parseStringFilter } from "./queryParams/filtering/string/stringFilter";
+import { safeParseDefinedFields } from "./queryParams/definedFields";
+import { safeParsePagination } from "./queryParams/pagination";
+import { safeParseNonEmptyString, safeParseNumber } from "./utils/parseHelpers";
+import { ParseError } from "@effect/schema/ParseResult";
 
 export const getFilterParamsFromRequest = (req: Request) => {
   return {
@@ -29,7 +31,7 @@ export const getFilterParamsFromRequest = (req: Request) => {
   };
 };
 
-export const createToDo: RequestHandler = (req, res) => {
+export const createToDoItem: RequestHandler = (req, res) => {
   return pipe(
     safeParseNonEmptyString(req.body?.text),
     Effect.flatMap((text) => createTodoQuery(text)),
@@ -43,7 +45,7 @@ export const createToDo: RequestHandler = (req, res) => {
   );
 };
 
-export const getAllToDos: RequestHandler = (req, res) => {
+export const getAllToDoItems: RequestHandler = (req, res) => {
   const filters = getFilterParamsFromRequest(req);
 
   const safeParams = {
@@ -61,7 +63,7 @@ export const getAllToDos: RequestHandler = (req, res) => {
     ),
     pagination: safeParsePagination(req).pipe(
       Effect.orElseSucceed(() => ({
-        limit: 2,
+        limit: 5,
         offset: 0,
       }))
     ),
@@ -82,7 +84,7 @@ export const getAllToDos: RequestHandler = (req, res) => {
   );
 };
 
-export const getToDo: RequestHandler = (req, res) => {
+export const getToDoItem: RequestHandler = (req, res) => {
   const safeParams = {
     id: safeParseNumber(Number(req.params?.id)),
     definedFields: safeParseDefinedFields(req.query.fields).pipe(
@@ -108,7 +110,7 @@ export const getToDo: RequestHandler = (req, res) => {
 };
 
 // todo return more specific not found err
-export const deleteToDo: RequestHandler = (req, res) => {
+export const deleteToDoItem: RequestHandler = (req, res) => {
   return pipe(
     safeParseNumber(Number(req.params?.id)),
     Effect.flatMap((id) => deleteByIdQuery(id)),
@@ -121,7 +123,7 @@ export const deleteToDo: RequestHandler = (req, res) => {
   );
 };
 
-export const updateToDo: RequestHandler = (req, res) => {
+export const updateToDoItem: RequestHandler = (req, res) => {
   const safeParams = {
     id: safeParseNumber(Number(req.params?.id)),
     text: safeParseNonEmptyString(req.body?.text),
@@ -139,3 +141,52 @@ export const updateToDo: RequestHandler = (req, res) => {
       })
   );
 };
+
+type ResolveResponseInput = {
+  finalEffect: Effect.Effect<
+    never,
+    ParseError | Error,
+    Todo | readonly Todo[] | void
+  >;
+  response: Response;
+  successStatus: number;
+};
+
+function resolveResponse({
+  finalEffect,
+  response,
+  successStatus,
+}: ResolveResponseInput) {
+  return pipe(
+    Effect.matchCauseEffect(finalEffect, {
+      onFailure: (cause) => {
+        switch (cause._tag) {
+          case "Fail":
+            return Effect.succeed(
+              response.status(500).json({
+                message: `Fail: ${JSON.stringify(cause.error)}`,
+              })
+            );
+          case "Die":
+            return Effect.succeed(
+              response
+                .status(500)
+                .json({ message: `Die: ${JSON.stringify(cause.defect)}` })
+            );
+          case "Interrupt":
+            Effect.succeed(
+              response
+                .status(500)
+                .json({
+                  message: `Interrupt: ${JSON.stringify(cause.fiberId)}`,
+                })
+            );
+        }
+        return Effect.succeed(response.status(500).json(`Server error`));
+      },
+      onSuccess: (todos) =>
+        Effect.succeed(response.status(successStatus).json({ todos })),
+    }),
+    Effect.runPromise
+  );
+}

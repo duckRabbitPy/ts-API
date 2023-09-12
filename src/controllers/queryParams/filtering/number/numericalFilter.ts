@@ -1,12 +1,15 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
-import { safeParseNonEmptyString, safeParseNumber } from "../../models/common";
 
 import {
   safeParseNumericalOperator,
   numericalOperatorSqlMapping,
-} from "../../models/queryParams/numberComparison";
-import { parseColon } from "./common";
+} from "./numberComparison";
+import {
+  parseColon,
+  safeParseNonEmptyString,
+  safeParseNumber,
+} from "../../../utils/parseHelpers";
 
 const parseNumberFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);

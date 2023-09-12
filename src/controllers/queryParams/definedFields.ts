@@ -3,7 +3,7 @@ import { pipe } from "@effect/data/Function";
 import {
   safeParseNonEmptyString,
   safeParseStringArray,
-} from "../../models/common";
+} from "../utils/parseHelpers";
 
 export const safeParseDefinedFields = (maybeDefinedFieldsString: unknown) => {
   return pipe(

@@ -1,22 +1,22 @@
 import { Router } from "express";
 import {
-  createToDo,
-  deleteToDo,
-  getAllToDos,
-  getToDo,
-  updateToDo,
-} from "../../controllers/todos/todos";
+  createToDoItem,
+  deleteToDoItem,
+  getAllToDoItems,
+  getToDoItem,
+  updateToDoItem,
+} from "../../controllers/todoController";
 
 const todoRouter = Router();
 
-todoRouter.post("/", createToDo);
+todoRouter.post("/", createToDoItem);
 
-todoRouter.get("/", getAllToDos);
+todoRouter.get("/", getAllToDoItems);
 
-todoRouter.get("/:id", getToDo);
+todoRouter.get("/:id", getToDoItem);
 
-todoRouter.patch("/:id", updateToDo);
+todoRouter.patch("/:id", updateToDoItem);
 
-todoRouter.delete("/:id", deleteToDo);
+todoRouter.delete("/:id", deleteToDoItem);
 
 export { todoRouter };
