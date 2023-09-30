@@ -92,7 +92,7 @@ export const createTodoQuery = (text: string) => {
 };
 
 export const selectAllTodosQuery = (
-  sortBy: SortBy,
+  sort_by: SortBy,
   order: SortOrder,
   filters: sqlPrimedFilters,
   definedFields: readonly string[],
@@ -103,7 +103,7 @@ export const selectAllTodosQuery = (
       const result = await pool.query(
         `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
           filters
-        )} ORDER BY ${sortBy} ${order} LIMIT ${pagination.limit} OFFSET ${
+        )} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${
           pagination.offset
         }`
       );

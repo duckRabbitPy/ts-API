@@ -15,6 +15,7 @@
   "main": "app.js",
   "scripts": {
     "start": "bun --hot run src/app.ts",
+    "testServer": "bun --hot run src/app.ts",
     "test": "bun test --watch"
   },
   "author": "",

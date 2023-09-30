@@ -15,7 +15,7 @@ todoRouter.get("/", getAllToDoItems);
 
 todoRouter.get("/:id", getToDoItem);
 
-todoRouter.patch("/:id", updateToDoItem);
+todoRouter.put("/:id", updateToDoItem);
 
 todoRouter.delete("/:id", deleteToDoItem);
 

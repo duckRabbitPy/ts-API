@@ -50,7 +50,7 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
   const filters = getFilterParamsFromRequest(req);
 
   const safeParams = {
-    sortBy: safeParseSortByParam(req.query.sortBy).pipe(
+    sort_by: safeParseSortByParam(req.query.sortBy).pipe(
       Effect.orElseSucceed(() => "id" as const)
     ),
     order: safeParseOrderParam(req.query.order).pipe(
@@ -72,8 +72,8 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
 
   return pipe(
     Effect.all(safeParams),
-    Effect.flatMap(({ sortBy, order, filters, definedFields, pagination }) =>
-      selectAllTodosQuery(sortBy, order, filters, definedFields, pagination)
+    Effect.flatMap(({ sort_by, order, filters, definedFields, pagination }) =>
+      selectAllTodosQuery(sort_by, order, filters, definedFields, pagination)
     ),
     Effect.flatMap((result) => parseTodoArray(result)),
     (finalEffect) =>
@@ -183,7 +183,7 @@ function resolveResponse({
         return Effect.succeed(response.status(500).json(`Server error`));
       },
       onSuccess: (todos) =>
-        Effect.succeed(response.status(successStatus).json({ todos })),
+        Effect.succeed(response.status(successStatus).json(todos)),
     }),
     Effect.runPromise
   );
