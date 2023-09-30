@@ -3,6 +3,7 @@ import * as Effect from "@effect/io/Effect";
 import { pool } from "../db/connection";
 import { SortOrder } from "../controllers/queryParams/sorting/order";
 import { SortBy } from "../controllers/queryParams/sorting/sortBy";
+import { Data } from "effect";
 
 export const ToDoSchema = Schema.struct({
   id: Schema.number,
@@ -15,6 +16,8 @@ export type Todo = Schema.To<typeof ToDoSchema>;
 export const parseTodo = Schema.parse(ToDoSchema);
 
 export const parseTodoArray = Schema.parse(Schema.array(ToDoSchema));
+
+export class PostgresError extends Data.TaggedClass("PostgresError")<{}> {}
 
 type sqlPrimedFilters = {
   id: {
@@ -82,7 +85,9 @@ export const createTodoQuery = (text: string) => {
 
   return Effect.tryPromise({
     try: () => create(),
-    catch: (unknown) => new Error(`something went wrong ${unknown}`),
+    catch: (unknown) => new PostgresError(),
+
+    // Error(`something went wrong ${unknown}`),
   });
 };
 
@@ -95,14 +100,6 @@ export const selectAllTodosQuery = (
 ) => {
   const selectAll = async () => {
     try {
-      console.log(pagination);
-      console.log(
-        `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
-          filters
-        )} ORDER BY ${sortBy} ${order} LIMIT ${pagination.limit} OFFSET ${
-          pagination.offset
-        }`
-      );
       const result = await pool.query(
         `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
           filters
@@ -119,7 +116,7 @@ export const selectAllTodosQuery = (
 
   return Effect.tryPromise({
     try: () => selectAll(),
-    catch: (unknown) => new Error(`something went wrong ${unknown}`),
+    catch: (unknown) => new PostgresError(),
   });
 };
 
@@ -141,7 +138,7 @@ export const selectTodoByIdQuery = (
 
   return Effect.tryPromise({
     try: () => selectById(),
-    catch: (unknown) => new Error(`something went wrong ${unknown}`),
+    catch: (unknown) => new PostgresError(),
   });
 };
 
@@ -156,7 +153,7 @@ export const deleteByIdQuery = (id: number) => {
 
   return Effect.tryPromise({
     try: () => deleteById(),
-    catch: (unknown) => new Error(`something went wrong ${unknown}`),
+    catch: (unknown) => new PostgresError(),
   });
 };
 
@@ -177,6 +174,6 @@ export const updateTodosQuery = (id: number, text: string) => {
 
   return Effect.tryPromise({
     try: () => updateById(),
-    catch: (unknown) => new Error(`something went wrong ${unknown}`),
+    catch: (unknown) => new PostgresError(),
   });
 };

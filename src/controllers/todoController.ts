@@ -7,6 +7,7 @@ import {
   deleteByIdQuery,
   parseTodo,
   parseTodoArray,
+  PostgresError,
   selectAllTodosQuery,
   selectTodoByIdQuery,
   Todo,
@@ -109,7 +110,6 @@ export const getToDoItem: RequestHandler = (req, res) => {
   );
 };
 
-// todo return more specific not found err
 export const deleteToDoItem: RequestHandler = (req, res) => {
   return pipe(
     safeParseNumber(Number(req.params?.id)),
@@ -145,7 +145,7 @@ export const updateToDoItem: RequestHandler = (req, res) => {
 type ResolveResponseInput = {
   finalEffect: Effect.Effect<
     never,
-    ParseError | Error,
+    ParseError | PostgresError,
     Todo | readonly Todo[] | void
   >;
   response: Response;
@@ -164,7 +164,7 @@ function resolveResponse({
           case "Fail":
             return Effect.succeed(
               response.status(500).json({
-                message: `Fail: ${JSON.stringify(cause.error)}`,
+                message: `Fail: ${cause.error._tag}`,
               })
             );
           case "Die":
@@ -175,11 +175,9 @@ function resolveResponse({
             );
           case "Interrupt":
             Effect.succeed(
-              response
-                .status(500)
-                .json({
-                  message: `Interrupt: ${JSON.stringify(cause.fiberId)}`,
-                })
+              response.status(500).json({
+                message: `Interrupt: ${JSON.stringify(cause.fiberId)}`,
+              })
             );
         }
         return Effect.succeed(response.status(500).json(`Server error`));
