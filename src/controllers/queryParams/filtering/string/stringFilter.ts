@@ -10,6 +10,7 @@ import {
   parseColon,
   safeParseNonEmptyString,
 } from "../../../utils/parseHelpers";
+import { ParameterError } from "../../../../models/todos";
 
 const parseStringFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);
@@ -33,7 +34,8 @@ export const parseStringFilter = (maybeFilterString: unknown) => {
   return pipe(
     safeParseNonEmptyString(maybeFilterString),
     Effect.flatMap((filterString) => parseStringFilterString(filterString)),
-    Effect.orElseSucceed(() => null),
-    Effect.runSync
+    Effect.orElseFail(
+      () => new ParameterError({ message: "Invalid string filter" })
+    )
   );
 };

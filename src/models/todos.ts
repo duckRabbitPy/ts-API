@@ -17,7 +17,17 @@ export const parseTodo = Schema.parse(ToDoSchema);
 
 export const parseTodoArray = Schema.parse(Schema.array(ToDoSchema));
 
-export class PostgresError extends Data.TaggedClass("PostgresError")<{}> {}
+export class PostgresError extends Data.TaggedClass("PostgresError")<{
+  message: string;
+}> {}
+
+export class ParameterError extends Data.TaggedClass("ParameterError")<{
+  message: string;
+}> {}
+
+export class ItemNotFoundError extends Data.TaggedClass("ItemNotFoundError")<{
+  message: string;
+}> {}
 
 type sqlPrimedFilters = {
   id: {
@@ -85,7 +95,7 @@ export const createTodoQuery = (text: string) => {
 
   return Effect.tryPromise({
     try: () => create(),
-    catch: (unknown) => new PostgresError(),
+    catch: (e) => new PostgresError({ message: "postgres query error" }),
 
     // Error(`something went wrong ${unknown}`),
   });
@@ -116,7 +126,7 @@ export const selectAllTodosQuery = (
 
   return Effect.tryPromise({
     try: () => selectAll(),
-    catch: (unknown) => new PostgresError(),
+    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
   });
 };
 
@@ -138,14 +148,19 @@ export const selectTodoByIdQuery = (
 
   return Effect.tryPromise({
     try: () => selectById(),
-    catch: (unknown) => new PostgresError(),
+    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
   });
 };
 
 export const deleteByIdQuery = (id: number) => {
   const deleteById = async () => {
     try {
-      await pool.query(`DELETE FROM todos WHERE id = $1 RETURNING id`, [id]);
+      const result = await pool.query(
+        `DELETE FROM todos WHERE id = $1 RETURNING id`,
+        [id]
+      );
+
+      return result.rows[0];
     } catch (error) {
       throw error;
     }
@@ -153,7 +168,7 @@ export const deleteByIdQuery = (id: number) => {
 
   return Effect.tryPromise({
     try: () => deleteById(),
-    catch: (unknown) => new PostgresError(),
+    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
   });
 };
 
@@ -161,8 +176,9 @@ export const updateTodosQuery = (id: number, text: string) => {
   const updateById = async () => {
     try {
       const result = await pool.query(
-        `INSERT INTO todos (id, text, updated_at) VALUES ($1, $2, NOW())
-        ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text, updated_at = NOW()
+        `UPDATE todos
+        SET text = $2, updated_at = NOW()
+        WHERE id = $1
         RETURNING *`,
         [id, text]
       );
@@ -174,6 +190,6 @@ export const updateTodosQuery = (id: number, text: string) => {
 
   return Effect.tryPromise({
     try: () => updateById(),
-    catch: (unknown) => new PostgresError(),
+    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
   });
 };

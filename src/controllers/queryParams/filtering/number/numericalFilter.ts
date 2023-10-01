@@ -10,6 +10,7 @@ import {
   safeParseNonEmptyString,
   safeParseNumber,
 } from "../../../utils/parseHelpers";
+import { ParameterError } from "../../../../models/todos";
 
 const parseNumberFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);
@@ -33,7 +34,8 @@ export const parseNumericalFilter = (maybeFilterString: unknown) => {
   return pipe(
     safeParseNonEmptyString(maybeFilterString),
     Effect.flatMap((filterString) => parseNumberFilterString(filterString)),
-    Effect.orElseSucceed(() => null),
-    Effect.runSync
+    Effect.orElseFail(
+      () => new ParameterError({ message: "Invalid numerical filter" })
+    )
   );
 };

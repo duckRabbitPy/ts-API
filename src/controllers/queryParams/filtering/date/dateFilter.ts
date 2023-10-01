@@ -10,6 +10,7 @@ import {
   safeParseDate,
   safeParseNonEmptyString,
 } from "../../../utils/parseHelpers";
+import { ParameterError } from "../../../../models/todos";
 
 const parseDateFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);
@@ -34,7 +35,8 @@ export const parseDateFilter = (maybeFilterString: unknown) => {
   return pipe(
     safeParseNonEmptyString(maybeFilterString),
     Effect.flatMap((filterString) => parseDateFilterString(filterString)),
-    Effect.orElseSucceed(() => null),
-    Effect.runSync
+    Effect.orElseFail(
+      () => new ParameterError({ message: "Invalid date filter" })
+    )
   );
 };

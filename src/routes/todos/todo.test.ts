@@ -144,6 +144,17 @@ describe("V1 Todo Database Tests", () => {
     ]);
   });
 
+  test("return error if invalid date", async () => {
+    const res = await fetch(`${TODOS_ENDPOINT}?updated_at=eq%3Anot_a_date`);
+
+    expect(res.status).toEqual(500);
+    await checkContentType(res);
+
+    expect(await res.json().then((res) => res.message)).toBe(
+      "Fail: ParameterError"
+    );
+  });
+
   test("get todo by id", async () => {
     const res = await fetch(`${TODOS_ENDPOINT}/1`);
     expect(res.status).toEqual(200);
@@ -152,15 +163,15 @@ describe("V1 Todo Database Tests", () => {
     expect(await res.json().then((res) => res.id)).toBe(1);
   });
 
-  test.todo("get todo by id not found", async () => {
+  test("get todo by id not found", async () => {
     const res = await fetch(`${TODOS_ENDPOINT}/100`);
-    // expect(res.status).toEqual(404);
+    expect(res.status).toEqual(404);
     checkContentType(res);
     expect(
       await res.json().then((res) => {
-        return res;
+        return res.message;
       })
-    ).toBe("Todo with id 100 not found");
+    ).toBe("Fail: ItemNotFoundError");
   });
 
   test("create todo", async () => {
@@ -175,7 +186,7 @@ describe("V1 Todo Database Tests", () => {
     expect(await res.json().then((res) => res.text)).toBe("hello");
   });
 
-  test.todo("create todo with empty text", async () => {
+  test("create todo with empty text", async () => {
     const res = await fetch(`${TODOS_ENDPOINT}`, {
       method: "POST",
       body: JSON.stringify({ text: "" }),
@@ -186,9 +197,9 @@ describe("V1 Todo Database Tests", () => {
     checkContentType(res);
     expect(
       await res.json().then((res) => {
-        return res;
+        return res.message;
       })
-    ).toBe("Text cannot be empty");
+    ).toBe("Fail: ParameterError");
   });
 
   test("update todo", async () => {
@@ -210,8 +221,8 @@ describe("V1 Todo Database Tests", () => {
     );
   });
 
-  test.todo("update todo not found", async () => {
-    const res = await fetch(`${TODOS_ENDPOINT}/100`, {
+  test("update todo not found", async () => {
+    const res = await fetch(`${TODOS_ENDPOINT}/111`, {
       method: "PUT",
       body: JSON.stringify({ text: "updated with new text" }),
       headers: { "Content-Type": "application/json" },
@@ -221,9 +232,9 @@ describe("V1 Todo Database Tests", () => {
     checkContentType(res);
     expect(
       await res.json().then((res) => {
-        return res;
+        return res.message;
       })
-    ).toBe("Todo with id 100 not found");
+    ).toBe("Fail: ItemNotFoundError");
   });
 
   test("delete todo", async () => {
@@ -239,7 +250,7 @@ describe("V1 Todo Database Tests", () => {
     expect(await deletedRes.json().then((res) => res.text)).toBeUndefined();
   });
 
-  test.todo("delete todo not found", async () => {
+  test("delete todo not found", async () => {
     const res = await fetch(`${TODOS_ENDPOINT}/100`, {
       method: "DELETE",
     });
@@ -247,9 +258,9 @@ describe("V1 Todo Database Tests", () => {
     checkContentType(res);
     expect(
       await res.json().then((res) => {
-        return res;
+        return res.message;
       })
-    ).toBe("Todo with id 100 not found");
+    ).toBe("Fail: ItemNotFoundError");
   });
 
   test("getall only returns defined fields", async () => {

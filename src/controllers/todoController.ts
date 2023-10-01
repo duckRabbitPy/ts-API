@@ -5,6 +5,8 @@ import {} from "./queryParams/filtering/number/numberComparison";
 import {
   createTodoQuery,
   deleteByIdQuery,
+  ItemNotFoundError,
+  ParameterError,
   parseTodo,
   parseTodoArray,
   PostgresError,
@@ -21,20 +23,38 @@ import { parseNumericalFilter } from "./queryParams/filtering/number/numericalFi
 import { parseStringFilter } from "./queryParams/filtering/string/stringFilter";
 import { safeParseDefinedFields } from "./queryParams/definedFields";
 import { safeParsePagination } from "./queryParams/pagination";
-import { safeParseNonEmptyString, safeParseNumber } from "./utils/parseHelpers";
+import {
+  checkIfNoResult,
+  safeParseNonEmptyString,
+  safeParseNumber,
+} from "./utils/parseHelpers";
 import { ParseError } from "@effect/schema/ParseResult";
 
 export const getFilterParamsFromRequest = (req: Request) => {
-  return {
-    id: parseNumericalFilter(req.query?.id),
-    text: parseStringFilter(req.query?.text),
-    updated_at: parseDateFilter(req.query?.updated_at),
-  };
+  const query = req?.query;
+
+  const id = !query.id
+    ? Effect.succeed(null)
+    : parseNumericalFilter(req.query.id);
+
+  const text = !query.text
+    ? Effect.succeed(null)
+    : parseStringFilter(req.query.text);
+
+  const updated_at = !query.updated_at
+    ? Effect.succeed(null)
+    : parseDateFilter(req.query.updated_at);
+
+  return pipe(Effect.all({ id, text, updated_at }));
 };
 
 export const createToDoItem: RequestHandler = (req, res) => {
   return pipe(
-    safeParseNonEmptyString(req.body?.text),
+    safeParseNonEmptyString(req.body?.text).pipe(
+      Effect.orElseFail(
+        () => new ParameterError({ message: "Invalid text input" })
+      )
+    ),
     Effect.flatMap((text) => createTodoQuery(text)),
     Effect.flatMap((result) => parseTodo(result)),
     (finalEffect) =>
@@ -56,7 +76,7 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
     order: safeParseOrderParam(req.query.order).pipe(
       Effect.orElseSucceed(() => "asc" as const)
     ),
-    filters: Effect.succeed(filters),
+    filters: filters,
     definedFields: safeParseDefinedFields(req.query.fields).pipe(
       Effect.orElseSucceed(
         () => ["id", "text", "updated_at"] as readonly string[]
@@ -87,7 +107,9 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
 
 export const getToDoItem: RequestHandler = (req, res) => {
   const safeParams = {
-    id: safeParseNumber(Number(req.params?.id)),
+    id: safeParseNumber(Number(req.params?.id)).pipe(
+      Effect.orElseFail(() => new ParameterError({ message: "Invalid id" }))
+    ),
     definedFields: safeParseDefinedFields(req.query.fields).pipe(
       Effect.orElseSucceed(
         () => ["id", "text", "updated_at"] as readonly string[]
@@ -100,6 +122,7 @@ export const getToDoItem: RequestHandler = (req, res) => {
     Effect.flatMap(({ id, definedFields }) =>
       selectTodoByIdQuery(id, definedFields)
     ),
+    Effect.flatMap(checkIfNoResult),
     Effect.flatMap((result) => parseTodo(result)),
     (finalEffect) =>
       resolveResponse({
@@ -114,6 +137,7 @@ export const deleteToDoItem: RequestHandler = (req, res) => {
   return pipe(
     safeParseNumber(Number(req.params?.id)),
     Effect.flatMap((id) => deleteByIdQuery(id)),
+    Effect.flatMap(checkIfNoResult),
     (finalEffect) =>
       resolveResponse({
         finalEffect,
@@ -132,6 +156,7 @@ export const updateToDoItem: RequestHandler = (req, res) => {
   return pipe(
     Effect.all(safeParams),
     Effect.flatMap(({ id, text }) => updateTodosQuery(id, text)),
+    Effect.flatMap(checkIfNoResult),
     Effect.flatMap((res) => parseTodo(res)),
     (finalEffect) =>
       resolveResponse({
@@ -145,7 +170,7 @@ export const updateToDoItem: RequestHandler = (req, res) => {
 type ResolveResponseInput = {
   finalEffect: Effect.Effect<
     never,
-    ParseError | PostgresError,
+    ParseError | PostgresError | ParameterError | ItemNotFoundError,
     Todo | readonly Todo[] | void
   >;
   response: Response;
@@ -162,6 +187,13 @@ function resolveResponse({
       onFailure: (cause) => {
         switch (cause._tag) {
           case "Fail":
+            if (cause.error._tag === "ItemNotFoundError") {
+              return Effect.succeed(
+                response.status(404).json({
+                  message: `Fail: ${cause.error._tag}`,
+                })
+              );
+            }
             return Effect.succeed(
               response.status(500).json({
                 message: `Fail: ${cause.error._tag}`,

@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { pipe } from "@effect/data/Function";
 import * as Schema from "@effect/schema/Schema";
+import { ItemNotFoundError } from "../../models/todos";
 
 export const parseColon = (filterString: string): [string, string] => {
   if (filterString.includes(":")) {
@@ -35,3 +36,8 @@ export const safeParseNonEmptyString = Schema.parse(
 );
 export const safeParseDate = Schema.parse(Schema.Date);
 export const safeParseStringArray = Schema.parse(Schema.array(Schema.string));
+
+export const checkIfNoResult = <T>(result: T) =>
+  !!result
+    ? Effect.succeed(result)
+    : Effect.fail(new ItemNotFoundError({ message: "Item not found" }));
