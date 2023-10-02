@@ -50,13 +50,12 @@ export const getFilterParamsFromRequest = (req: Request) => {
 
 export const createToDoItem: RequestHandler = (req, res) => {
   return pipe(
-    safeParseNonEmptyString(req.body?.text).pipe(
-      Effect.orElseFail(
-        () => new ParameterError({ message: "Invalid text input" })
-      )
+    safeParseNonEmptyString(req.body?.text),
+    Effect.orElseFail(
+      () => new ParameterError({ message: "Invalid text input" })
     ),
-    Effect.flatMap((text) => createTodoQuery(text)),
-    Effect.flatMap((result) => parseTodo(result)),
+    Effect.flatMap(createTodoQuery),
+    Effect.flatMap(parseTodo),
     (finalEffect) =>
       resolveResponse({
         finalEffect,
@@ -84,7 +83,7 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
     ),
     pagination: safeParsePagination(req).pipe(
       Effect.orElseSucceed(() => ({
-        limit: 5,
+        limit: 20,
         offset: 0,
       }))
     ),
@@ -95,7 +94,7 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
     Effect.flatMap(({ sort_by, order, filters, definedFields, pagination }) =>
       selectAllTodosQuery(sort_by, order, filters, definedFields, pagination)
     ),
-    Effect.flatMap((result) => parseTodoArray(result)),
+    Effect.flatMap(parseTodoArray),
     (finalEffect) =>
       resolveResponse({
         finalEffect,
@@ -123,7 +122,7 @@ export const getToDoItem: RequestHandler = (req, res) => {
       selectTodoByIdQuery(id, definedFields)
     ),
     Effect.flatMap(checkIfNoResult),
-    Effect.flatMap((result) => parseTodo(result)),
+    Effect.flatMap(parseTodo),
     (finalEffect) =>
       resolveResponse({
         finalEffect,
@@ -157,7 +156,7 @@ export const updateToDoItem: RequestHandler = (req, res) => {
     Effect.all(safeParams),
     Effect.flatMap(({ id, text }) => updateTodosQuery(id, text)),
     Effect.flatMap(checkIfNoResult),
-    Effect.flatMap((res) => parseTodo(res)),
+    Effect.flatMap(parseTodo),
     (finalEffect) =>
       resolveResponse({
         finalEffect,
@@ -190,6 +189,13 @@ function resolveResponse({
             if (cause.error._tag === "ItemNotFoundError") {
               return Effect.succeed(
                 response.status(404).json({
+                  message: `Fail: ${cause.error._tag}`,
+                })
+              );
+            }
+            if (cause.error._tag === "ParameterError") {
+              return Effect.succeed(
+                response.status(400).json({
                   message: `Fail: ${cause.error._tag}`,
                 })
               );

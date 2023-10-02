@@ -29,6 +29,10 @@ export class ItemNotFoundError extends Data.TaggedClass("ItemNotFoundError")<{
   message: string;
 }> {}
 
+export class AuthorisationError extends Data.TaggedClass("AuthorisationError")<{
+  message: string;
+}> {}
+
 type sqlPrimedFilters = {
   id: {
     numericalOperator: "=" | ">" | ">=" | "<=";
@@ -81,7 +85,6 @@ const constructWhereClause = (filters: sqlPrimedFilters) => {
 export const createTodoQuery = (text: string) => {
   const create = async () => {
     try {
-      // todo: in case of concurrent insert and unique constraint error, retry query
       const result = await pool.query(
         `INSERT INTO todos (id, text)
         VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM todos), $1) RETURNING *`,
@@ -96,9 +99,7 @@ export const createTodoQuery = (text: string) => {
   return Effect.tryPromise({
     try: () => create(),
     catch: (e) => new PostgresError({ message: "postgres query error" }),
-
-    // Error(`something went wrong ${unknown}`),
-  });
+  }).pipe(Effect.retryN(1));
 };
 
 export const selectAllTodosQuery = (
