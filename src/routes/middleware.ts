@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { pipe } from "@effect/data/Function";
 import { safeParseNonEmptyString } from "../controllers/utils/parseHelpers";
 import { Effect } from "effect";
-import { AuthorisationError } from "../models/todos";
+import { AuthorisationError } from "../controllers/customErrors";
 
 const validateApiKey = (apiKey: string) => {
   return apiKey === Bun.env.API_KEY;

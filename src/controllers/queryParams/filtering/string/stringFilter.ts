@@ -10,7 +10,7 @@ import {
   parseColon,
   safeParseNonEmptyString,
 } from "../../../utils/parseHelpers";
-import { ParameterError } from "../../../../models/todos";
+import { ParameterError } from "../../../customErrors";
 
 const parseStringFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);

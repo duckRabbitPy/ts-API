@@ -3,7 +3,7 @@ import * as Effect from "@effect/io/Effect";
 import { pool } from "../db/connection";
 import { SortOrder } from "../controllers/queryParams/sorting/order";
 import { SortBy } from "../controllers/queryParams/sorting/sortBy";
-import { Data } from "effect";
+import { PostgresError } from "../controllers/customErrors";
 
 export const ToDoSchema = Schema.struct({
   id: Schema.number,
@@ -16,22 +16,6 @@ export type Todo = Schema.To<typeof ToDoSchema>;
 export const parseTodo = Schema.parse(ToDoSchema);
 
 export const parseTodoArray = Schema.parse(Schema.array(ToDoSchema));
-
-export class PostgresError extends Data.TaggedClass("PostgresError")<{
-  message: string;
-}> {}
-
-export class ParameterError extends Data.TaggedClass("ParameterError")<{
-  message: string;
-}> {}
-
-export class ItemNotFoundError extends Data.TaggedClass("ItemNotFoundError")<{
-  message: string;
-}> {}
-
-export class AuthorisationError extends Data.TaggedClass("AuthorisationError")<{
-  message: string;
-}> {}
 
 type sqlPrimedFilters = {
   id: {

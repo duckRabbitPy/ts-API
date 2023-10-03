@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { pipe } from "@effect/data/Function";
 import * as Schema from "@effect/schema/Schema";
-import { ItemNotFoundError } from "../../models/todos";
+import { ItemNotFoundError } from "../customErrors";
 
 export const parseColon = (filterString: string): [string, string] => {
   if (filterString.includes(":")) {

@@ -10,7 +10,7 @@ import {
   safeParseDate,
   safeParseNonEmptyString,
 } from "../../../utils/parseHelpers";
-import { ParameterError } from "../../../../models/todos";
+import { ParameterError } from "../../../customErrors";
 
 const parseDateFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);

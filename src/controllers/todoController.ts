@@ -5,11 +5,8 @@ import {} from "./queryParams/filtering/number/numberComparison";
 import {
   createTodoQuery,
   deleteByIdQuery,
-  ItemNotFoundError,
-  ParameterError,
   parseTodo,
   parseTodoArray,
-  PostgresError,
   selectAllTodosQuery,
   selectTodoByIdQuery,
   Todo,
@@ -29,6 +26,11 @@ import {
   safeParseNumber,
 } from "./utils/parseHelpers";
 import { ParseError } from "@effect/schema/ParseResult";
+import {
+  ItemNotFoundError,
+  ParameterError,
+  PostgresError,
+} from "./customErrors";
 
 export const getFilterParamsFromRequest = (req: Request) => {
   const query = req?.query;
