@@ -12,7 +12,7 @@ import {
 } from "../../../utils/parseHelpers";
 import { ParameterError } from "../../../customErrors";
 
-const parseNumberFilterString = (filterString: string) => {
+const parseColonDelimitedNumberFilter = (filterString: string) => {
   const [a, b] = parseColon(filterString);
   const safeParams = {
     numericalOperator: safeParseNumericalOperator(a),
@@ -30,12 +30,26 @@ const parseNumberFilterString = (filterString: string) => {
   );
 };
 
-export const parseNumericalFilter = (maybeFilterString: unknown) => {
-  return pipe(
-    safeParseNonEmptyString(maybeFilterString),
-    Effect.flatMap((filterString) => parseNumberFilterString(filterString)),
-    Effect.orElseFail(
-      () => new ParameterError({ message: "Invalid numerical filter" })
-    )
-  );
+export const parseNumericalQueryFilter = (maybeFilter: unknown) => {
+  if (typeof maybeFilter === "string") {
+    return Effect.all([
+      pipe(
+        parseColonDelimitedNumberFilter(maybeFilter),
+        Effect.orElseFail(
+          () => new ParameterError({ message: "Invalid numerical filter" })
+        )
+      ),
+    ]);
+  }
+
+  if (Array.isArray(maybeFilter)) {
+    return pipe(
+      Effect.all(maybeFilter.map(parseColonDelimitedNumberFilter)),
+      Effect.orElseFail(
+        () => new ParameterError({ message: "Invalid numerical filter" })
+      )
+    );
+  }
+
+  return Effect.succeed(null);
 };

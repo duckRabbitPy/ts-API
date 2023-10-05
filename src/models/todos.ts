@@ -18,40 +18,60 @@ export const parseTodo = Schema.parse(ToDoSchema);
 export const parseTodoArray = Schema.parse(Schema.array(ToDoSchema));
 
 type sqlPrimedFilters = {
-  id: {
-    numericalOperator: "=" | ">" | ">=" | "<=";
-    predicateValue: number;
-  } | null;
-  text: {
-    stringOperatorCallback: (a: string) => string;
-    predicateValue: string;
-  } | null;
-  updated_at: {
-    dateOperator: "=" | ">" | "<";
-    predicateValue: string;
-  } | null;
+  id:
+    | {
+        numericalOperator: "=" | ">" | ">=" | "<=" | "<";
+        predicateValue: number;
+      }[]
+    | null;
+  text:
+    | {
+        stringOperatorCallback: (a: string) => string;
+        predicateValue: string;
+      }[]
+    | null;
+  updated_at:
+    | {
+        dateOperator: "=" | ">" | "<";
+        predicateValue: string;
+      }[]
+    | null;
 };
 const constructWhereClause = (filters: sqlPrimedFilters) => {
   const idFilterQuery = !!filters.id
-    ? `id ${filters.id?.numericalOperator} ${filters.id?.predicateValue}`
+    ? filters.id
+        .map(
+          (filter) => `id ${filter.numericalOperator} ${filter.predicateValue}`
+        )
+        .join(" AND ")
     : ``;
 
   const textFilterQuery = !!filters.text
-    ? `text ${filters.text.stringOperatorCallback(filters.text.predicateValue)}`
+    ? filters.text
+        .map(
+          (filter) =>
+            `text ${filter.stringOperatorCallback(filter.predicateValue)}`
+        )
+        .join(" AND ")
     : ``;
 
   // microsecond interval added to account for postgres timestamp precision compared to javascript Date precision
   const dateFilterQuery = !!filters.updated_at
-    ? `updated_at ${filters.updated_at.dateOperator} TIMESTAMP '${
-        filters.updated_at.predicateValue
-      }' ${
-        filters.updated_at.dateOperator === ">"
-          ? "+ INTERVAL '100 microseconds'"
-          : filters.updated_at.dateOperator === "<"
-          ? "- INTERVAL '100 microseconds'"
-          : ""
-      }`
-    : "";
+    ? filters.updated_at
+        .map(
+          (filter) =>
+            `updated_at ${filter.dateOperator} TIMESTAMP '${
+              filter.predicateValue
+            }' ${
+              filter.dateOperator === ">"
+                ? "+ INTERVAL '100 microseconds'"
+                : filter.dateOperator === "<"
+                ? "- INTERVAL '100 microseconds'"
+                : ""
+            }`
+        )
+        .join(" AND ")
+    : ``;
 
   const filterQueries = [
     idFilterQuery,
@@ -62,7 +82,6 @@ const constructWhereClause = (filters: sqlPrimedFilters) => {
   if (filterQueries.length === 0) {
     return ``;
   }
-
   return `WHERE ${filterQueries.join(" AND ")}`;
 };
 
@@ -111,7 +130,7 @@ export const selectAllTodosQuery = (
 
   return Effect.tryPromise({
     try: () => selectAll(),
-    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
+    catch: () => new PostgresError({ message: "postgres query error" }),
   });
 };
 
@@ -133,7 +152,7 @@ export const selectTodoByIdQuery = (
 
   return Effect.tryPromise({
     try: () => selectById(),
-    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
+    catch: () => new PostgresError({ message: "postgres query error" }),
   });
 };
 
@@ -153,7 +172,7 @@ export const deleteByIdQuery = (id: number) => {
 
   return Effect.tryPromise({
     try: () => deleteById(),
-    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
+    catch: () => new PostgresError({ message: "postgres query error" }),
   });
 };
 
@@ -175,6 +194,6 @@ export const updateTodosQuery = (id: number, text: string) => {
 
   return Effect.tryPromise({
     try: () => updateById(),
-    catch: (unknown) => new PostgresError({ message: "postgres query error" }),
+    catch: () => new PostgresError({ message: "postgres query error" }),
   });
 };

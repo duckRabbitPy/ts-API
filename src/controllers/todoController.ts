@@ -16,8 +16,8 @@ import { Request, Response } from "express";
 import { safeParseSortByParam } from "./queryParams/sorting/sortBy";
 import { safeParseOrderParam } from "./queryParams/sorting/order";
 import { parseDateFilter } from "./queryParams/filtering/date/dateFilter";
-import { parseNumericalFilter } from "./queryParams/filtering/number/numericalFilter";
-import { parseStringFilter } from "./queryParams/filtering/string/stringFilter";
+import { parseNumericalQueryFilter } from "./queryParams/filtering/number/numericalFilter";
+import { parseStringFilter as parseStringQueryFilter } from "./queryParams/filtering/string/stringFilter";
 import { safeParseDefinedFields } from "./queryParams/definedFields";
 import { safeParsePagination } from "./queryParams/pagination";
 import {
@@ -35,17 +35,11 @@ import {
 export const getFilterParamsFromRequest = (req: Request) => {
   const query = req?.query;
 
-  const id = !query.id
-    ? Effect.succeed(null)
-    : parseNumericalFilter(req.query.id);
+  const id = parseNumericalQueryFilter(req.query.id);
 
-  const text = !query.text
-    ? Effect.succeed(null)
-    : parseStringFilter(req.query.text);
+  const text = parseStringQueryFilter(req.query.text);
 
-  const updated_at = !query.updated_at
-    ? Effect.succeed(null)
-    : parseDateFilter(req.query.updated_at);
+  const updated_at = parseDateFilter(req.query.updated_at);
 
   return pipe(Effect.all({ id, text, updated_at }));
 };
@@ -178,6 +172,19 @@ type ResolveResponseInput = {
   successStatus: number;
 };
 
+const respondWithError = (
+  response: Response,
+  status: number,
+  message: string
+) =>
+  pipe(
+    Effect.succeed(
+      response.status(status).json({
+        message: `Fail: ${message}`,
+      })
+    )
+  );
+
 function resolveResponse({
   finalEffect,
   response,
@@ -189,38 +196,19 @@ function resolveResponse({
         switch (cause._tag) {
           case "Fail":
             if (cause.error._tag === "ItemNotFoundError") {
-              return Effect.succeed(
-                response.status(404).json({
-                  message: `Fail: ${cause.error._tag}`,
-                })
-              );
+              return respondWithError(response, 404, cause.error._tag);
             }
             if (cause.error._tag === "ParameterError") {
-              return Effect.succeed(
-                response.status(400).json({
-                  message: `Fail: ${cause.error._tag}`,
-                })
-              );
+              return respondWithError(response, 400, cause.error._tag);
             }
-            return Effect.succeed(
-              response.status(500).json({
-                message: `Fail: ${cause.error._tag}`,
-              })
-            );
+            return respondWithError(response, 500, cause.error._tag);
           case "Die":
-            return Effect.succeed(
-              response
-                .status(500)
-                .json({ message: `Die: ${JSON.stringify(cause.defect)}` })
-            );
           case "Interrupt":
-            Effect.succeed(
-              response.status(500).json({
-                message: `Interrupt: ${JSON.stringify(cause.fiberId)}`,
-              })
-            );
+            respondWithError(response, 500, "Internal server error");
         }
-        return Effect.succeed(response.status(500).json(`Server error`));
+        return Effect.succeed(
+          response.status(500).json(`Internal Server error`)
+        );
       },
       onSuccess: (todos) =>
         Effect.succeed(response.status(successStatus).json(todos)),

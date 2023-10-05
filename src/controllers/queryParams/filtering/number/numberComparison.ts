@@ -4,7 +4,7 @@ export const numericalOperatorSqlMapping = {
   eq: "=",
   gt: ">",
   gte: ">=",
-  lt: ">",
+  lt: "<",
   lte: "<=",
 } as NumericalOperatorMap;
 
@@ -12,7 +12,7 @@ export const numericalOperatorMapSchema = Schema.struct({
   eq: Schema.literal("="),
   gt: Schema.literal(">"),
   gte: Schema.literal(">="),
-  lt: Schema.literal(">"),
+  lt: Schema.literal("<"),
   lte: Schema.literal("<="),
 });
 

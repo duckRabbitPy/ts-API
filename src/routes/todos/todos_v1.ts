@@ -19,4 +19,8 @@ todoRouter.put("/:id", updateToDoItem);
 
 todoRouter.delete("/:id", deleteToDoItem);
 
+todoRouter.use((req, res) => {
+  res.status(406).json({ message: "Method Not Acceptable" });
+});
+
 export { todoRouter };

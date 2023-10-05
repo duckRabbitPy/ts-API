@@ -12,7 +12,7 @@ import {
 } from "../../../utils/parseHelpers";
 import { ParameterError } from "../../../customErrors";
 
-const parseDateFilterString = (filterString: string) => {
+const parseCommaDelimitedDateFilterString = (filterString: string) => {
   const [a, b] = parseColon(filterString);
 
   const safeParams = {
@@ -31,12 +31,26 @@ const parseDateFilterString = (filterString: string) => {
   );
 };
 
-export const parseDateFilter = (maybeFilterString: unknown) => {
-  return pipe(
-    safeParseNonEmptyString(maybeFilterString),
-    Effect.flatMap((filterString) => parseDateFilterString(filterString)),
-    Effect.orElseFail(
-      () => new ParameterError({ message: "Invalid date filter" })
-    )
-  );
+export const parseDateFilter = (maybeFilter: unknown) => {
+  if (typeof maybeFilter === "string") {
+    return Effect.all([
+      pipe(
+        parseCommaDelimitedDateFilterString(maybeFilter),
+        Effect.orElseFail(
+          () => new ParameterError({ message: "Invalid string filter" })
+        )
+      ),
+    ]);
+  }
+
+  if (Array.isArray(maybeFilter)) {
+    return pipe(
+      Effect.all(maybeFilter.map(parseCommaDelimitedDateFilterString)),
+      Effect.orElseFail(
+        () => new ParameterError({ message: "Invalid numerical filter" })
+      )
+    );
+  }
+
+  return Effect.succeed(null);
 };

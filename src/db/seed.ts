@@ -1,6 +1,6 @@
 import { pool } from "./connection";
 
-export const SEED_VALUES = {
+export const TODO_SEED_VALUES = {
   todos: [
     {
       id: 1,
@@ -44,7 +44,7 @@ export const resetAndSeedDatabase = async () => {
         )
       `);
 
-    for (const item of SEED_VALUES.todos) {
+    for (const item of TODO_SEED_VALUES.todos) {
       const { id, text, updated_at } = item;
       await client.query(
         `INSERT INTO todos (id, text, updated_at)
