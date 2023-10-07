@@ -4,7 +4,7 @@ import { resetAndSeedDatabase, TODO_SEED_VALUES } from "../../db/seed";
 describe("V1 Todo Database Tests", () => {
   const TODOS_ENDPOINT = "http://localhost:3000/api-v1/todos";
   const AUTH_HEADER = {
-    "x-api-key": Bun.env.API_KEY || "",
+    "x-api-key": process.env.API_KEY || "",
   };
 
   async function checkContentType(response: Response) {

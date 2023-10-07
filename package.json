@@ -8,17 +8,18 @@
     "body-parser": "^1.19.1",
     "effect": "2.0.0-next.19",
     "express": "^4.17.2",
-    "pg": "^8.11.3",
-    "start-server-and-test": "^2.0.1"
+    "pg": "^8.11.3"
   },
   "name": "ts-api",
   "version": "1.0.0",
   "description": "rest api",
   "main": "app.js",
   "scripts": {
-    "start": "bun --hot run src/app.ts",
-    "start-test-server": "NODE_ENV=test bun start --watch",
-    "test": "NODE_ENV=test bun test --watch",
+    "js": "bun tsc",
+    "start": "node dist/app.js",
+    "dev": "NODE_ENV=development  bun --hot run src/app.ts",
+    "test": "NODE_ENV=development bun test",
+    "start-test-server": "NODE_ENV=development bun dev --watch",
     "db:test": "start-server-and-test start-test-server http://localhost:3000 test"
   },
   "author": "",

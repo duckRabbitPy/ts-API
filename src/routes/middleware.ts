@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import { AuthorisationError } from "../controllers/customErrors";
 
 const validateApiKey = (apiKey: string) => {
-  return apiKey === Bun.env.API_KEY;
+  return apiKey === process.env.API_KEY;
 };
 
 // Middleware to check API key in headers

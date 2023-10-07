@@ -17,6 +17,11 @@ export const parseTodo = Schema.parse(ToDoSchema);
 
 export const parseTodoArray = Schema.parse(Schema.array(ToDoSchema));
 
+const logAndThrowError = (error: unknown) => {
+  console.error(error);
+  throw error;
+};
+
 type sqlPrimedFilters = {
   id:
     | {
@@ -95,7 +100,7 @@ export const createTodoQuery = (text: string) => {
       );
       return result.rows[0];
     } catch (error) {
-      throw error;
+      logAndThrowError(error);
     }
   };
 
@@ -124,7 +129,7 @@ export const selectAllTodosQuery = (
 
       return result.rows;
     } catch (error) {
-      throw error;
+      logAndThrowError(error);
     }
   };
 
@@ -146,7 +151,7 @@ export const selectTodoByIdQuery = (
       );
       return result.rows[0];
     } catch (error) {
-      throw error;
+      logAndThrowError(error);
     }
   };
 
@@ -166,7 +171,7 @@ export const deleteByIdQuery = (id: number) => {
 
       return result.rows[0];
     } catch (error) {
-      throw error;
+      logAndThrowError(error);
     }
   };
 
@@ -188,7 +193,7 @@ export const updateTodosQuery = (id: number, text: string) => {
       );
       return result.rows[0];
     } catch (error) {
-      throw error;
+      logAndThrowError(error);
     }
   };
 

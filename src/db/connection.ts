@@ -1,21 +1,18 @@
 import { Pool } from "pg";
 
-console.log("NODE_ENV", Bun.env.NODE_ENV);
+console.log("NODE_ENV", process.env.NODE_ENV);
 export const pool =
-  Bun.env.NODE_ENV === "test"
+  process.env.NODE_ENV === "development"
     ? new Pool({
-        user: Bun.env.PG_USERNAME,
-        host: Bun.env.HOST,
-        database: Bun.env.TEST_PG_NAME,
-        password: Bun.env.TEST_PG_PASSWORD,
+        user: "postgres",
+        host: process.env.HOST,
+        database: process.env.TEST_PG_NAME,
+        password: process.env.TEST_PG_PASSWORD,
         port: 5432,
       })
-    : Bun.env.NODE_ENV === "development"
+    : process.env.NODE_ENV === "production"
     ? new Pool({
-        user: Bun.env.PG_USERNAME,
-        host: Bun.env.HOST,
-        database: Bun.env.PG_NAME,
-        password: Bun.env.PG_PASSWORD,
-        port: 5432,
+        connectionString: process.env.PROD_DATABASE_URL,
+        max: 40,
       })
     : new Pool({});

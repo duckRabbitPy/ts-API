@@ -4,7 +4,7 @@ import { todoRouter as todoRouterV1 } from "./routes/todos/todos_v1";
 import { json } from "body-parser";
 import { apiKeyMiddleware } from "./routes/middleware";
 
-Bun.env.TZ = "UTC";
+process.env.TZ = "UTC";
 
 const app = express();
 
