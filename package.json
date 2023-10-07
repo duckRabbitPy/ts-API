@@ -11,10 +11,12 @@
     "pg": "^8.11.3",
     "start-server-and-test": "^2.0.1"
   },
-  "name": "ts-api",
+  "name": "effect-ts-api",
   "version": "1.0.0",
   "description": "rest api",
   "main": "app.js",
+  "module": "app.ts",
+  "type": "module",
   "scripts": {
     "start": "bun --hot run src/app.ts",
     "start-test-server": "NODE_ENV=test bun start --watch",
