@@ -46,7 +46,7 @@ export const parseStringFilter = (maybeFilter: unknown) => {
     return pipe(
       Effect.all(maybeFilter.map(parseColonDelimitedStringFilter)),
       Effect.orElseFail(
-        () => new ParameterError({ message: "Invalid numerical filter" })
+        () => new ParameterError({ message: "Invalid string filter" })
       )
     );
   }
