@@ -37,7 +37,7 @@ export const parseDateFilter = (maybeFilter: unknown) => {
       pipe(
         parseCommaDelimitedDateFilterString(maybeFilter),
         Effect.orElseFail(
-          () => new ParameterError({ message: "Invalid string filter" })
+          () => new ParameterError({ message: "Invalid date filter" })
         )
       ),
     ]);
@@ -47,7 +47,7 @@ export const parseDateFilter = (maybeFilter: unknown) => {
     return pipe(
       Effect.all(maybeFilter.map(parseCommaDelimitedDateFilterString)),
       Effect.orElseFail(
-        () => new ParameterError({ message: "Invalid numerical filter" })
+        () => new ParameterError({ message: "Invalid date filter" })
       )
     );
   }
