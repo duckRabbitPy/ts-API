@@ -6,18 +6,17 @@ import {
   safeParseDateOperator,
 } from "./dateComparison";
 import {
-  parseColon,
   safeParseDate,
-  safeParseNonEmptyString,
+  splitOperatorAndValue,
 } from "../../../utils/parseHelpers";
 import { ParameterError } from "../../../customErrors";
 
-const parseCommaDelimitedDateFilterString = (filterString: string) => {
-  const [a, b] = parseColon(filterString);
+const parseColonDelimitedDateFilterString = (filterString: string) => {
+  const [operator, value] = splitOperatorAndValue(filterString);
 
   const safeParams = {
-    dateOperator: safeParseDateOperator(a),
-    predicateValue: safeParseDate(b),
+    dateOperator: safeParseDateOperator(operator),
+    predicateValue: safeParseDate(value),
   };
 
   return pipe(
@@ -35,7 +34,7 @@ export const parseDateFilter = (maybeFilter: unknown) => {
   if (typeof maybeFilter === "string") {
     return Effect.all([
       pipe(
-        parseCommaDelimitedDateFilterString(maybeFilter),
+        parseColonDelimitedDateFilterString(maybeFilter),
         Effect.orElseFail(
           () => new ParameterError({ message: "Invalid date filter" })
         )
@@ -45,12 +44,12 @@ export const parseDateFilter = (maybeFilter: unknown) => {
 
   if (Array.isArray(maybeFilter)) {
     return pipe(
-      Effect.all(maybeFilter.map(parseCommaDelimitedDateFilterString)),
+      Effect.all(maybeFilter.map(parseColonDelimitedDateFilterString)),
       Effect.orElseFail(
         () => new ParameterError({ message: "Invalid date filter" })
       )
     );
   }
 
-  return Effect.succeed(null);
+  return Effect.succeed([]);
 };

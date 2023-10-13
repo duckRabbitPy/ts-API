@@ -7,16 +7,16 @@ import {
 } from "./stringComparison";
 
 import {
-  parseColon,
+  splitOperatorAndValue,
   safeParseNonEmptyString,
 } from "../../../utils/parseHelpers";
 import { ParameterError } from "../../../customErrors";
 
 const parseColonDelimitedStringFilter = (filterString: string) => {
-  const [a, b] = parseColon(filterString);
+  const [operator, value] = splitOperatorAndValue(filterString);
   const safeParams = {
-    stringOperator: safeParseStringOperator(a),
-    predicateValue: safeParseNonEmptyString(b),
+    stringOperator: safeParseStringOperator(operator),
+    predicateValue: safeParseNonEmptyString(value),
   };
 
   return pipe(
@@ -51,5 +51,5 @@ export const parseStringFilter = (maybeFilter: unknown) => {
     );
   }
 
-  return Effect.succeed(null);
+  return Effect.succeed([]);
 };

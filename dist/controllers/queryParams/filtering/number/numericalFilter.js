@@ -30,7 +30,7 @@ const numberComparison_1 = require("./numberComparison");
 const parseHelpers_1 = require("../../../utils/parseHelpers");
 const customErrors_1 = require("../../../customErrors");
 const parseColonDelimitedNumberFilter = (filterString) => {
-    const [a, b] = (0, parseHelpers_1.parseColon)(filterString);
+    const [a, b] = (0, parseHelpers_1.splitPredicateAndValue)(filterString);
     const safeParams = {
         numericalOperator: (0, numberComparison_1.safeParseNumericalOperator)(a),
         predicateValue: (0, parseHelpers_1.safeParseNumber)(Number(b)),

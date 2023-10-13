@@ -6,17 +6,16 @@ import {
   numericalOperatorSqlMapping,
 } from "./numberComparison";
 import {
-  parseColon,
-  safeParseNonEmptyString,
+  splitOperatorAndValue,
   safeParseNumber,
 } from "../../../utils/parseHelpers";
 import { ParameterError } from "../../../customErrors";
 
 const parseColonDelimitedNumberFilter = (filterString: string) => {
-  const [a, b] = parseColon(filterString);
+  const [operator, value] = splitOperatorAndValue(filterString);
   const safeParams = {
-    numericalOperator: safeParseNumericalOperator(a),
-    predicateValue: safeParseNumber(Number(b)),
+    numericalOperator: safeParseNumericalOperator(operator),
+    predicateValue: safeParseNumber(Number(value)),
   };
 
   return pipe(
@@ -51,5 +50,5 @@ export const parseNumericalQueryFilter = (maybeFilter: unknown) => {
     );
   }
 
-  return Effect.succeed(null);
+  return Effect.succeed([]);
 };

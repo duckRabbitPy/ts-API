@@ -65,6 +65,18 @@ describe("V1 Todo Database Tests", () => {
     );
   });
 
+  test("id equal number", async () => {
+    const res = await fetch(`${TODOS_ENDPOINT}?id=3`, {
+      headers: AUTH_HEADER,
+    });
+    expect(res.status).toEqual(200);
+    await checkContentType(res);
+
+    expect(await res.json().then((res) => res)).toMatchObject(
+      TODO_SEED_VALUES.todos.filter((todo) => todo.id === 3)
+    );
+  });
+
   test("id greater than number", async () => {
     const res = await fetch(`${TODOS_ENDPOINT}?id=gt%3A3`, {
       headers: AUTH_HEADER,

@@ -32,11 +32,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateTodosQuery = exports.deleteByIdQuery = exports.selectTodoByIdQuery = exports.selectAllTodosQuery = exports.createTodoQuery = exports.parseTodoArray = exports.parseTodo = exports.ToDoSchema = void 0;
+exports.updateTodosQuery = exports.deleteByIdQuery = exports.selectTodoByIdQuery = exports.selectAllTodosQuery = exports.createTodoQuery = exports.constructTODOWhereClause = exports.parseTodoArray = exports.parseTodo = exports.ToDoSchema = void 0;
 const Schema = __importStar(require("@effect/schema/Schema"));
 const Effect = __importStar(require("@effect/io/Effect"));
 const connection_1 = require("../db/connection");
 const customErrors_1 = require("../controllers/customErrors");
+const sqlUtils_1 = require("./sqlUtils");
 exports.ToDoSchema = Schema.struct({
     id: Schema.number,
     text: Schema.optional(Schema.string),
@@ -44,40 +45,21 @@ exports.ToDoSchema = Schema.struct({
 });
 exports.parseTodo = Schema.parse(exports.ToDoSchema);
 exports.parseTodoArray = Schema.parse(Schema.array(exports.ToDoSchema));
+const constructTODOWhereClause = (filters) => {
+    const filterQueries = [
+        (0, sqlUtils_1.createFilterQuery)("id", filters.id, sqlUtils_1.numericalFilterQuery),
+        (0, sqlUtils_1.createFilterQuery)("text", filters.text, sqlUtils_1.stringFilterQuery),
+        (0, sqlUtils_1.createFilterQuery)("updated_at", filters.updated_at, sqlUtils_1.dateFilterQuery),
+    ];
+    const validFilterQueries = filterQueries.filter(isNotNil);
+    return validFilterQueries.length > 0
+        ? `WHERE ${validFilterQueries.join(" AND ")}`
+        : "";
+};
+exports.constructTODOWhereClause = constructTODOWhereClause;
 const logAndThrowError = (error) => {
     console.error(error);
     throw error;
-};
-const constructWhereClause = (filters) => {
-    const idFilterQuery = !!filters.id
-        ? filters.id
-            .map((filter) => `id ${filter.numericalOperator} ${filter.predicateValue}`)
-            .join(" AND ")
-        : ``;
-    const textFilterQuery = !!filters.text
-        ? filters.text
-            .map((filter) => `text ${filter.stringOperatorCallback(filter.predicateValue)}`)
-            .join(" AND ")
-        : ``;
-    // microsecond interval added to account for postgres timestamp precision compared to javascript Date precision
-    const dateFilterQuery = !!filters.updated_at
-        ? filters.updated_at
-            .map((filter) => `updated_at ${filter.dateOperator} TIMESTAMP '${filter.predicateValue}' ${filter.dateOperator === ">"
-            ? "+ INTERVAL '100 microseconds'"
-            : filter.dateOperator === "<"
-                ? "- INTERVAL '100 microseconds'"
-                : ""}`)
-            .join(" AND ")
-        : ``;
-    const filterQueries = [
-        idFilterQuery,
-        textFilterQuery,
-        dateFilterQuery,
-    ].filter(Boolean);
-    if (filterQueries.length === 0) {
-        return ``;
-    }
-    return `WHERE ${filterQueries.join(" AND ")}`;
 };
 const createTodoQuery = (text) => {
     const create = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -99,7 +81,7 @@ exports.createTodoQuery = createTodoQuery;
 const selectAllTodosQuery = (sort_by, order, filters, definedFields, pagination) => {
     const selectAll = () => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const result = yield connection_1.pool.query(`SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(filters)} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${pagination.offset}`);
+            const result = yield connection_1.pool.query(`SELECT ${definedFields.join(",")} FROM todos ${(0, exports.constructTODOWhereClause)(filters)} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${pagination.offset}`);
             return result.rows;
         }
         catch (error) {

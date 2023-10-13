@@ -54,6 +54,14 @@ const seed_1 = require("../../db/seed");
         yield checkContentType(res);
         (0, bun_test_1.expect)(yield res.json().then((res) => res)).toMatchObject(seed_1.TODO_SEED_VALUES.todos.slice().reverse());
     }));
+    (0, bun_test_1.test)("id equal number", () => __awaiter(void 0, void 0, void 0, function* () {
+        const res = yield fetch(`${TODOS_ENDPOINT}?id=3`, {
+            headers: AUTH_HEADER,
+        });
+        (0, bun_test_1.expect)(res.status).toEqual(200);
+        yield checkContentType(res);
+        (0, bun_test_1.expect)(yield res.json().then((res) => res)).toMatchObject(seed_1.TODO_SEED_VALUES.todos.filter((todo) => todo.id === 3));
+    }));
     (0, bun_test_1.test)("id greater than number", () => __awaiter(void 0, void 0, void 0, function* () {
         const res = yield fetch(`${TODOS_ENDPOINT}?id=gt%3A3`, {
             headers: AUTH_HEADER,

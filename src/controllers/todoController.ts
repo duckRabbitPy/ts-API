@@ -33,8 +33,6 @@ import {
 } from "./customErrors";
 
 export const getFilterParamsFromRequest = (req: Request) => {
-  const query = req?.query;
-
   const id = parseNumericalQueryFilter(req.query.id);
 
   const text = parseStringQueryFilter(req.query.text);

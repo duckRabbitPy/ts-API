@@ -29,8 +29,8 @@ const Effect = __importStar(require("@effect/io/Effect"));
 const dateComparison_1 = require("./dateComparison");
 const parseHelpers_1 = require("../../../utils/parseHelpers");
 const customErrors_1 = require("../../../customErrors");
-const parseCommaDelimitedDateFilterString = (filterString) => {
-    const [a, b] = (0, parseHelpers_1.parseColon)(filterString);
+const parseColonDelimitedDateFilterString = (filterString) => {
+    const [a, b] = (0, parseHelpers_1.splitPredicateAndValue)(filterString);
     const safeParams = {
         dateOperator: (0, dateComparison_1.safeParseDateOperator)(a),
         predicateValue: (0, parseHelpers_1.safeParseDate)(b),
@@ -43,11 +43,11 @@ const parseCommaDelimitedDateFilterString = (filterString) => {
 const parseDateFilter = (maybeFilter) => {
     if (typeof maybeFilter === "string") {
         return Effect.all([
-            (0, Function_1.pipe)(parseCommaDelimitedDateFilterString(maybeFilter), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid string filter" }))),
+            (0, Function_1.pipe)(parseColonDelimitedDateFilterString(maybeFilter), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid date filter" }))),
         ]);
     }
     if (Array.isArray(maybeFilter)) {
-        return (0, Function_1.pipe)(Effect.all(maybeFilter.map(parseCommaDelimitedDateFilterString)), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid numerical filter" })));
+        return (0, Function_1.pipe)(Effect.all(maybeFilter.map(parseColonDelimitedDateFilterString)), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid date filter" })));
     }
     return Effect.succeed(null);
 };

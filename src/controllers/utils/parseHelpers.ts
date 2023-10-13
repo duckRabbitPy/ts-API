@@ -3,7 +3,9 @@ import { pipe } from "@effect/data/Function";
 import * as Schema from "@effect/schema/Schema";
 import { ItemNotFoundError } from "../customErrors";
 
-export const parseColon = (filterString: string): [string, string] => {
+export const splitOperatorAndValue = (
+  filterString: string
+): [string, string] => {
   if (filterString.includes(":")) {
     const splitIndex = filterString.indexOf(":");
     const leftPart = filterString.substring(0, splitIndex);

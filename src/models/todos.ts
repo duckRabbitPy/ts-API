@@ -4,7 +4,18 @@ import { pool } from "../db/connection";
 import { SortOrder } from "../controllers/queryParams/sorting/order";
 import { SortBy } from "../controllers/queryParams/sorting/sortBy";
 import { PostgresError } from "../controllers/customErrors";
+import {
+  DateSQLFilter,
+  NumericalSQLFilter,
+  StringSQLFilter,
+  createFilterQuery,
+  dateFilterQuery,
+  numericalFilterQuery,
+  stringFilterQuery,
+} from "./sqlUtils";
+import { isNotNil } from "../commonUtils/tsUtils";
 
+// this is the /todos API _return_ type for a todo not the database schema type
 export const ToDoSchema = Schema.struct({
   id: Schema.number,
   text: Schema.optional(Schema.string),
@@ -17,77 +28,29 @@ export const parseTodo = Schema.parse(ToDoSchema);
 
 export const parseTodoArray = Schema.parse(Schema.array(ToDoSchema));
 
+type TODOSqlFilters = {
+  id: NumericalSQLFilter[];
+  text: StringSQLFilter[];
+  updated_at: DateSQLFilter[];
+};
+
+export const constructTODOWhereClause = (filters: TODOSqlFilters) => {
+  const filterQueries = [
+    createFilterQuery("id", filters.id, numericalFilterQuery),
+    createFilterQuery("text", filters.text, stringFilterQuery),
+    createFilterQuery("updated_at", filters.updated_at, dateFilterQuery),
+  ];
+
+  const validFilterQueries = filterQueries.filter(isNotNil);
+
+  return validFilterQueries.length > 0
+    ? `WHERE ${validFilterQueries.join(" AND ")}`
+    : "";
+};
+
 const logAndThrowError = (error: unknown) => {
   console.error(error);
   throw error;
-};
-
-type sqlPrimedFilters = {
-  id:
-    | {
-        numericalOperator: "=" | ">" | ">=" | "<=" | "<";
-        predicateValue: number;
-      }[]
-    | null;
-  text:
-    | {
-        stringOperatorCallback: (a: string) => string;
-        predicateValue: string;
-      }[]
-    | null;
-  updated_at:
-    | {
-        dateOperator: "=" | ">" | "<";
-        predicateValue: string;
-      }[]
-    | null;
-};
-const constructWhereClause = (filters: sqlPrimedFilters) => {
-  const idFilterQuery = !!filters.id
-    ? filters.id
-        .map(
-          (filter) => `id ${filter.numericalOperator} ${filter.predicateValue}`
-        )
-        .join(" AND ")
-    : ``;
-
-  const textFilterQuery = !!filters.text
-    ? filters.text
-        .map(
-          (filter) =>
-            `text ${filter.stringOperatorCallback(filter.predicateValue)}`
-        )
-        .join(" AND ")
-    : ``;
-
-  // microsecond interval added to account for postgres timestamp precision compared to javascript Date precision
-  const dateFilterQuery = !!filters.updated_at
-    ? filters.updated_at
-        .map(
-          (filter) =>
-            `updated_at ${filter.dateOperator} TIMESTAMP '${
-              filter.predicateValue
-            }' ${
-              filter.dateOperator === ">"
-                ? "+ INTERVAL '100 microseconds'"
-                : filter.dateOperator === "<"
-                ? "- INTERVAL '100 microseconds'"
-                : ""
-            }`
-        )
-        .join(" AND ")
-    : ``;
-
-  const filterQueries = [
-    idFilterQuery,
-    textFilterQuery,
-    dateFilterQuery,
-  ].filter(Boolean);
-
-  if (filterQueries.length === 0) {
-    return ``;
-  }
-  return `WHERE ${filterQueries.join(" AND ")}`;
 };
 
 export const createTodoQuery = (text: string) => {
@@ -113,20 +76,18 @@ export const createTodoQuery = (text: string) => {
 export const selectAllTodosQuery = (
   sort_by: SortBy,
   order: SortOrder,
-  filters: sqlPrimedFilters,
+  filters: TODOSqlFilters,
   definedFields: readonly string[],
   pagination: { limit: number; offset: number }
 ) => {
   const selectAll = async () => {
+    const columns = definedFields.join(",");
+    const whereClause = constructTODOWhereClause(filters);
+
     try {
       const result = await pool.query(
-        `SELECT ${definedFields.join(",")} FROM todos ${constructWhereClause(
-          filters
-        )} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${
-          pagination.offset
-        }`
+        `SELECT ${columns} FROM todos ${whereClause} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${pagination.offset}`
       );
-
       return result.rows;
     } catch (error) {
       logAndThrowError(error);
