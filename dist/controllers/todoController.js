@@ -36,12 +36,13 @@ const definedFields_1 = require("./queryParams/definedFields");
 const pagination_1 = require("./queryParams/pagination");
 const parseHelpers_1 = require("./utils/parseHelpers");
 const customErrors_1 = require("./customErrors");
+const booleanFilter_1 = require("./queryParams/filtering/boolean/booleanFilter");
 const getFilterParamsFromRequest = (req) => {
-    const query = req === null || req === void 0 ? void 0 : req.query;
     const id = (0, numericalFilter_1.parseNumericalQueryFilter)(req.query.id);
     const text = (0, stringFilter_1.parseStringFilter)(req.query.text);
-    const updated_at = (0, dateFilter_1.parseDateFilter)(req.query.updated_at);
-    return (0, Function_1.pipe)(Effect.all({ id, text, updated_at }));
+    const updated_at = (0, dateFilter_1.parseDateQueryFilter)(req.query.updated_at);
+    const completed = (0, booleanFilter_1.parseBooleanQueryFilter)(req.query.completed);
+    return (0, Function_1.pipe)(Effect.all({ id, text, updated_at, completed }));
 };
 exports.getFilterParamsFromRequest = getFilterParamsFromRequest;
 const createToDoItem = (req, res) => {
@@ -59,7 +60,7 @@ const getAllToDoItems = (req, res) => {
         sort_by: (0, sortBy_1.safeParseSortByParam)(req.query.sortBy).pipe(Effect.orElseSucceed(() => "id")),
         order: (0, order_1.safeParseOrderParam)(req.query.order).pipe(Effect.orElseSucceed(() => "asc")),
         filters: filters,
-        definedFields: (0, definedFields_1.safeParseDefinedFields)(req.query.fields).pipe(Effect.orElseSucceed(() => ["id", "text", "updated_at"])),
+        definedFields: (0, definedFields_1.safeParseDefinedFields)(req.query.fields).pipe(Effect.orElseSucceed(() => ["*"])),
         pagination: (0, pagination_1.safeParsePagination)(req).pipe(Effect.orElseSucceed(() => ({
             limit: 20,
             offset: 0,

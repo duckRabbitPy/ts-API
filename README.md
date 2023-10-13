@@ -23,11 +23,10 @@ CREATE DATABASE effect_pg_test WITH
 
 ```
  CREATE TABLE IF NOT EXISTS todos (
-          id serial PRIMARY KEY,
-          text VARCHAR(255) NOT NULL,
-          updated_at TIMESTAMP DEFAULT NOW(),
-          completed BOOLEAN DEFAULT false
-        )
+    id serial PRIMARY KEY,
+    text VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW(),
+    completed BOOLEAN DEFAULT false )
 
 ```
 

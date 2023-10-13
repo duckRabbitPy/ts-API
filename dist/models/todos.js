@@ -38,10 +38,13 @@ const Effect = __importStar(require("@effect/io/Effect"));
 const connection_1 = require("../db/connection");
 const customErrors_1 = require("../controllers/customErrors");
 const sqlUtils_1 = require("./sqlUtils");
+const tsUtils_1 = require("../commonUtils/tsUtils");
+// this is the /todos API _return_ type for a todo not the database schema type
 exports.ToDoSchema = Schema.struct({
     id: Schema.number,
     text: Schema.optional(Schema.string),
     updated_at: Schema.optional(Schema.DateFromSelf),
+    completed: Schema.optional(Schema.boolean),
 });
 exports.parseTodo = Schema.parse(exports.ToDoSchema);
 exports.parseTodoArray = Schema.parse(Schema.array(exports.ToDoSchema));
@@ -50,8 +53,9 @@ const constructTODOWhereClause = (filters) => {
         (0, sqlUtils_1.createFilterQuery)("id", filters.id, sqlUtils_1.numericalFilterQuery),
         (0, sqlUtils_1.createFilterQuery)("text", filters.text, sqlUtils_1.stringFilterQuery),
         (0, sqlUtils_1.createFilterQuery)("updated_at", filters.updated_at, sqlUtils_1.dateFilterQuery),
+        (0, sqlUtils_1.createFilterQuery)("completed", filters.completed, sqlUtils_1.booleanFilterQuery),
     ];
-    const validFilterQueries = filterQueries.filter(isNotNil);
+    const validFilterQueries = filterQueries.filter(tsUtils_1.isNotNil);
     return validFilterQueries.length > 0
         ? `WHERE ${validFilterQueries.join(" AND ")}`
         : "";
@@ -80,8 +84,10 @@ const createTodoQuery = (text) => {
 exports.createTodoQuery = createTodoQuery;
 const selectAllTodosQuery = (sort_by, order, filters, definedFields, pagination) => {
     const selectAll = () => __awaiter(void 0, void 0, void 0, function* () {
+        const columns = definedFields.join(",");
+        const whereClause = (0, exports.constructTODOWhereClause)(filters);
         try {
-            const result = yield connection_1.pool.query(`SELECT ${definedFields.join(",")} FROM todos ${(0, exports.constructTODOWhereClause)(filters)} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${pagination.offset}`);
+            const result = yield connection_1.pool.query(`SELECT ${columns} FROM todos ${whereClause} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${pagination.offset}`);
             return result.rows;
         }
         catch (error) {

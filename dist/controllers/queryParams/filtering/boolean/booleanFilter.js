@@ -23,32 +23,28 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseNumericalQueryFilter = void 0;
+exports.parseBooleanQueryFilter = void 0;
 const Function_1 = require("@effect/data/Function");
 const Effect = __importStar(require("@effect/io/Effect"));
-const numberComparison_1 = require("./numberComparison");
-const parseHelpers_1 = require("../../../utils/parseHelpers");
+const Schema = __importStar(require("@effect/schema/Schema"));
 const customErrors_1 = require("../../../customErrors");
-const parseColonDelimitedNumberFilter = (filterString) => {
-    const [operator, value] = (0, parseHelpers_1.splitOperatorAndValue)(filterString);
+const safeParseBoolean = Schema.parse(Schema.union(Schema.literal("true"), Schema.literal("false")));
+const parseBooleanFilter = (maybeBoolStr) => {
     const safeParams = {
-        numericalOperator: (0, numberComparison_1.safeParseNumericalOperator)(operator),
-        predicateValue: (0, parseHelpers_1.safeParseNumber)(Number(value)),
+        booleanOperator: Effect.succeed("="),
+        predicateValue: safeParseBoolean(maybeBoolStr).pipe(Effect.flatMap((boolStr) => Effect.succeed(boolStr === "true"))),
     };
-    return (0, Function_1.pipe)(Effect.all(safeParams), Effect.flatMap(({ numericalOperator, predicateValue }) => Effect.succeed({
-        numericalOperator: numberComparison_1.numericalOperatorSqlMapping[numericalOperator],
-        predicateValue,
-    })));
+    return (0, Function_1.pipe)(Effect.all(safeParams));
 };
-const parseNumericalQueryFilter = (maybeFilter) => {
+const parseBooleanQueryFilter = (maybeFilter) => {
     if (typeof maybeFilter === "string") {
         return Effect.all([
-            (0, Function_1.pipe)(parseColonDelimitedNumberFilter(maybeFilter), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid numerical filter" }))),
+            (0, Function_1.pipe)(parseBooleanFilter(maybeFilter), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid boolean filter" }))),
         ]);
     }
     if (Array.isArray(maybeFilter)) {
-        return (0, Function_1.pipe)(Effect.all(maybeFilter.map(parseColonDelimitedNumberFilter)), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid numerical filter" })));
+        return (0, Function_1.pipe)(Effect.all(maybeFilter.map(parseBooleanFilter)), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid boolean filter" })));
     }
     return Effect.succeed([]);
 };
-exports.parseNumericalQueryFilter = parseNumericalQueryFilter;
+exports.parseBooleanQueryFilter = parseBooleanQueryFilter;

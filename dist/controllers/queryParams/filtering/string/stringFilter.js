@@ -30,10 +30,10 @@ const stringComparison_1 = require("./stringComparison");
 const parseHelpers_1 = require("../../../utils/parseHelpers");
 const customErrors_1 = require("../../../customErrors");
 const parseColonDelimitedStringFilter = (filterString) => {
-    const [a, b] = (0, parseHelpers_1.splitPredicateAndValue)(filterString);
+    const [operator, value] = (0, parseHelpers_1.splitOperatorAndValue)(filterString);
     const safeParams = {
-        stringOperator: (0, stringComparison_1.safeParseStringOperator)(a),
-        predicateValue: (0, parseHelpers_1.safeParseNonEmptyString)(b),
+        stringOperator: (0, stringComparison_1.safeParseStringOperator)(operator),
+        predicateValue: (0, parseHelpers_1.safeParseNonEmptyString)(value),
     };
     return (0, Function_1.pipe)(Effect.all(safeParams), Effect.flatMap(({ stringOperator, predicateValue }) => Effect.succeed({
         stringOperatorCallback: stringComparison_1.stringOperatorSqlMapping[stringOperator],
@@ -49,6 +49,6 @@ const parseStringFilter = (maybeFilter) => {
     if (Array.isArray(maybeFilter)) {
         return (0, Function_1.pipe)(Effect.all(maybeFilter.map(parseColonDelimitedStringFilter)), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid string filter" })));
     }
-    return Effect.succeed(null);
+    return Effect.succeed([]);
 };
 exports.parseStringFilter = parseStringFilter;

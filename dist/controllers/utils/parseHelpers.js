@@ -23,12 +23,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIfNoResult = exports.safeParseStringArray = exports.safeParseDate = exports.safeParseNonEmptyString = exports.safeParseNumber = exports.parseDefinedFields = exports.splitPredicateAndValue = void 0;
+exports.checkIfNoResult = exports.safeParseStringArray = exports.safeParseDate = exports.safeParseNonEmptyString = exports.safeParseNumber = exports.parseDefinedFields = exports.splitOperatorAndValue = void 0;
 const effect_1 = require("effect");
 const Function_1 = require("@effect/data/Function");
 const Schema = __importStar(require("@effect/schema/Schema"));
 const customErrors_1 = require("../customErrors");
-const splitPredicateAndValue = (filterString) => {
+const splitOperatorAndValue = (filterString) => {
     if (filterString.includes(":")) {
         const splitIndex = filterString.indexOf(":");
         const leftPart = filterString.substring(0, splitIndex);
@@ -37,7 +37,7 @@ const splitPredicateAndValue = (filterString) => {
     }
     return ["eq", filterString];
 };
-exports.splitPredicateAndValue = splitPredicateAndValue;
+exports.splitOperatorAndValue = splitOperatorAndValue;
 const parseDefinedFields = (maybeDefinedFieldsString) => {
     return (0, Function_1.pipe)((0, exports.safeParseNonEmptyString)(maybeDefinedFieldsString), effect_1.Effect.flatMap((definedFieldsString) => (0, exports.safeParseStringArray)(definedFieldsString
         .slice(1, -1) // remove brackets

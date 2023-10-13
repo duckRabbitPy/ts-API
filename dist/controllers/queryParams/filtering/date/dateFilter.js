@@ -23,24 +23,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseDateFilter = void 0;
+exports.parseDateQueryFilter = void 0;
 const Function_1 = require("@effect/data/Function");
 const Effect = __importStar(require("@effect/io/Effect"));
 const dateComparison_1 = require("./dateComparison");
 const parseHelpers_1 = require("../../../utils/parseHelpers");
 const customErrors_1 = require("../../../customErrors");
 const parseColonDelimitedDateFilterString = (filterString) => {
-    const [a, b] = (0, parseHelpers_1.splitPredicateAndValue)(filterString);
+    const [operator, value] = (0, parseHelpers_1.splitOperatorAndValue)(filterString);
     const safeParams = {
-        dateOperator: (0, dateComparison_1.safeParseDateOperator)(a),
-        predicateValue: (0, parseHelpers_1.safeParseDate)(b),
+        dateOperator: (0, dateComparison_1.safeParseDateOperator)(operator),
+        predicateValue: (0, parseHelpers_1.safeParseDate)(value),
     };
     return (0, Function_1.pipe)(Effect.all(safeParams), Effect.flatMap(({ dateOperator, predicateValue }) => Effect.succeed({
         dateOperator: dateComparison_1.dateOperatorSqlMapping[dateOperator],
         predicateValue: predicateValue.toISOString(),
     })));
 };
-const parseDateFilter = (maybeFilter) => {
+const parseDateQueryFilter = (maybeFilter) => {
     if (typeof maybeFilter === "string") {
         return Effect.all([
             (0, Function_1.pipe)(parseColonDelimitedDateFilterString(maybeFilter), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid date filter" }))),
@@ -49,6 +49,6 @@ const parseDateFilter = (maybeFilter) => {
     if (Array.isArray(maybeFilter)) {
         return (0, Function_1.pipe)(Effect.all(maybeFilter.map(parseColonDelimitedDateFilterString)), Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid date filter" })));
     }
-    return Effect.succeed(null);
+    return Effect.succeed([]);
 };
-exports.parseDateFilter = parseDateFilter;
+exports.parseDateQueryFilter = parseDateQueryFilter;
