@@ -30,7 +30,7 @@ const parseColonDelimitedDateFilterString = (filterString: string) => {
   );
 };
 
-export const parseDateFilter = (maybeFilter: unknown) => {
+export const parseDateQueryFilter = (maybeFilter: unknown) => {
   if (typeof maybeFilter === "string") {
     return Effect.all([
       pipe(

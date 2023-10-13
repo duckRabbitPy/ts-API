@@ -15,7 +15,7 @@ import {
 import { Request, Response } from "express";
 import { safeParseSortByParam } from "./queryParams/sorting/sortBy";
 import { safeParseOrderParam } from "./queryParams/sorting/order";
-import { parseDateFilter } from "./queryParams/filtering/date/dateFilter";
+import { parseDateQueryFilter } from "./queryParams/filtering/date/dateFilter";
 import { parseNumericalQueryFilter } from "./queryParams/filtering/number/numericalFilter";
 import { parseStringFilter as parseStringQueryFilter } from "./queryParams/filtering/string/stringFilter";
 import { safeParseDefinedFields } from "./queryParams/definedFields";
@@ -31,15 +31,18 @@ import {
   ParameterError,
   PostgresError,
 } from "./customErrors";
+import { parseBooleanQueryFilter } from "./queryParams/filtering/boolean/booleanFilter";
 
 export const getFilterParamsFromRequest = (req: Request) => {
   const id = parseNumericalQueryFilter(req.query.id);
 
   const text = parseStringQueryFilter(req.query.text);
 
-  const updated_at = parseDateFilter(req.query.updated_at);
+  const updated_at = parseDateQueryFilter(req.query.updated_at);
 
-  return pipe(Effect.all({ id, text, updated_at }));
+  const completed = parseBooleanQueryFilter(req.query.completed);
+
+  return pipe(Effect.all({ id, text, updated_at, completed }));
 };
 
 export const createToDoItem: RequestHandler = (req, res) => {
@@ -71,9 +74,7 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
     ),
     filters: filters,
     definedFields: safeParseDefinedFields(req.query.fields).pipe(
-      Effect.orElseSucceed(
-        () => ["id", "text", "updated_at"] as readonly string[]
-      )
+      Effect.orElseSucceed(() => ["*"] as readonly string[])
     ),
     pagination: safeParsePagination(req).pipe(
       Effect.orElseSucceed(() => ({

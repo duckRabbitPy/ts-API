@@ -5,9 +5,11 @@ import { SortOrder } from "../controllers/queryParams/sorting/order";
 import { SortBy } from "../controllers/queryParams/sorting/sortBy";
 import { PostgresError } from "../controllers/customErrors";
 import {
+  BooleanSQLFilter,
   DateSQLFilter,
   NumericalSQLFilter,
   StringSQLFilter,
+  booleanFilterQuery,
   createFilterQuery,
   dateFilterQuery,
   numericalFilterQuery,
@@ -20,6 +22,7 @@ export const ToDoSchema = Schema.struct({
   id: Schema.number,
   text: Schema.optional(Schema.string),
   updated_at: Schema.optional(Schema.DateFromSelf),
+  completed: Schema.optional(Schema.boolean),
 });
 
 export type Todo = Schema.To<typeof ToDoSchema>;
@@ -32,6 +35,7 @@ type TODOSqlFilters = {
   id: NumericalSQLFilter[];
   text: StringSQLFilter[];
   updated_at: DateSQLFilter[];
+  completed: BooleanSQLFilter[];
 };
 
 export const constructTODOWhereClause = (filters: TODOSqlFilters) => {
@@ -39,6 +43,7 @@ export const constructTODOWhereClause = (filters: TODOSqlFilters) => {
     createFilterQuery("id", filters.id, numericalFilterQuery),
     createFilterQuery("text", filters.text, stringFilterQuery),
     createFilterQuery("updated_at", filters.updated_at, dateFilterQuery),
+    createFilterQuery("completed", filters.completed, booleanFilterQuery),
   ];
 
   const validFilterQueries = filterQueries.filter(isNotNil);
@@ -83,7 +88,6 @@ export const selectAllTodosQuery = (
   const selectAll = async () => {
     const columns = definedFields.join(",");
     const whereClause = constructTODOWhereClause(filters);
-
     try {
       const result = await pool.query(
         `SELECT ${columns} FROM todos ${whereClause} ORDER BY ${sort_by} ${order} LIMIT ${pagination.limit} OFFSET ${pagination.offset}`

@@ -13,6 +13,11 @@ export type DateSQLFilter = {
   predicateValue: string;
 };
 
+export type BooleanSQLFilter = {
+  booleanOperator: "=";
+  predicateValue: boolean;
+};
+
 export const numericalFilterQuery = (
   paramName: string,
   filter: NumericalSQLFilter
@@ -23,6 +28,11 @@ export const stringFilterQuery = (paramName: string, filter: StringSQLFilter) =>
 
 export const dateFilterQuery = (paramName: string, filter: DateSQLFilter) =>
   `${paramName} ${filter.dateOperator} TIMESTAMP '${filter.predicateValue}'`;
+
+export const booleanFilterQuery = (
+  paramName: string,
+  filter: BooleanSQLFilter
+) => `${paramName} ${filter.booleanOperator} ${filter.predicateValue}`;
 
 export const createFilterQuery = <T>(
   paramName: string,
