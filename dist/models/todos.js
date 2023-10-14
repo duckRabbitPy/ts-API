@@ -132,13 +132,21 @@ const deleteByIdQuery = (id) => {
     });
 };
 exports.deleteByIdQuery = deleteByIdQuery;
-const updateTodosQuery = (id, text) => {
+const updateTodosQuery = (id, text, completed) => {
+    const newUpdates = {
+        text,
+        completed,
+    };
+    const { sqlSetQueries: sqlSetQuery, setParams } = (0, sqlUtils_1.createSetQueriesAndParams)(newUpdates, 1);
+    if (sqlSetQuery.length === 0) {
+        throw new customErrors_1.ParameterError({ message: "No update field specified" });
+    }
     const updateById = () => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const result = yield connection_1.pool.query(`UPDATE todos
-        SET text = $2, updated_at = NOW()
+        SET ${sqlSetQuery.join(", ")}, updated_at = NOW()
         WHERE id = $1
-        RETURNING *`, [id, text]);
+        RETURNING *`, [id, ...setParams]);
             return result.rows[0];
         }
         catch (error) {

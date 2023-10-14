@@ -23,16 +23,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseBooleanQueryFilter = void 0;
+exports.parseBooleanQueryFilter = exports.safeParseBooleanString = exports.safeParseTrueFalseStr = void 0;
 const Function_1 = require("@effect/data/Function");
 const Effect = __importStar(require("@effect/io/Effect"));
 const Schema = __importStar(require("@effect/schema/Schema"));
 const customErrors_1 = require("../../../customErrors");
-const safeParseBoolean = Schema.parse(Schema.union(Schema.literal("true"), Schema.literal("false")));
+exports.safeParseTrueFalseStr = Schema.parse(Schema.union(Schema.literal("true"), Schema.literal("false")));
+const safeParseBooleanString = (maybeBool) => (0, Function_1.pipe)(maybeBool, exports.safeParseTrueFalseStr, Effect.flatMap((boolStr) => Effect.succeed(boolStr === "true")));
+exports.safeParseBooleanString = safeParseBooleanString;
 const parseBooleanFilter = (maybeBoolStr) => {
     const safeParams = {
         booleanOperator: Effect.succeed("="),
-        predicateValue: safeParseBoolean(maybeBoolStr).pipe(Effect.flatMap((boolStr) => Effect.succeed(boolStr === "true"))),
+        predicateValue: (0, exports.safeParseBooleanString)(maybeBoolStr),
     };
     return (0, Function_1.pipe)(Effect.all(safeParams));
 };

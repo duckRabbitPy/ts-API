@@ -3,7 +3,7 @@ import * as Effect from "@effect/io/Effect";
 import { pool } from "../db/connection";
 import { SortOrder } from "../controllers/queryParams/sorting/order";
 import { SortBy } from "../controllers/queryParams/sorting/sortBy";
-import { PostgresError } from "../controllers/customErrors";
+import { ParameterError, PostgresError } from "../controllers/customErrors";
 import {
   BooleanSQLFilter,
   DateSQLFilter,
@@ -11,6 +11,7 @@ import {
   StringSQLFilter,
   booleanFilterQuery,
   createFilterQuery,
+  createSetQueriesAndParams,
   dateFilterQuery,
   numericalFilterQuery,
   stringFilterQuery,
@@ -146,16 +147,35 @@ export const deleteByIdQuery = (id: number) => {
   });
 };
 
-export const updateTodosQuery = (id: number, text: string) => {
+export const updateTodosQuery = (
+  id: number,
+  text: string | undefined,
+  completed: boolean | undefined
+) => {
+  const newUpdates = {
+    text,
+    completed,
+  };
+
+  const { sqlSetQueries: sqlSetQuery, setParams } = createSetQueriesAndParams(
+    newUpdates,
+    1
+  );
+
+  if (sqlSetQuery.length === 0) {
+    throw new ParameterError({ message: "No update field specified" });
+  }
+
   const updateById = async () => {
     try {
       const result = await pool.query(
         `UPDATE todos
-        SET text = $2, updated_at = NOW()
+        SET ${sqlSetQuery.join(", ")}, updated_at = NOW()
         WHERE id = $1
         RETURNING *`,
-        [id, text]
+        [id, ...setParams]
       );
+
       return result.rows[0];
     } catch (error) {
       logAndThrowError(error);

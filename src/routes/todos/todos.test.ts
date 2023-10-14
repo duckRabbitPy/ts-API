@@ -106,6 +106,18 @@ describe("V1 Todo Database Tests", () => {
       );
     });
 
+    test("set completed to true", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/1`, {
+        method: "PUT",
+        body: JSON.stringify({ completed: true }),
+        headers: { "Content-Type": "application/json", ...AUTH_HEADER },
+      });
+
+      expect(res.status).toEqual(200);
+      checkContentType(res);
+      expect(await res.json().then((res) => res.completed)).toBe(true);
+    });
+
     test("update todo not found", async () => {
       const res = await fetch(`${TODOS_ENDPOINT}/111`, {
         method: "PUT",

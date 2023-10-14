@@ -39,6 +39,8 @@ export const safeParseNonEmptyString = Schema.parse(
 export const safeParseDate = Schema.parse(Schema.Date);
 export const safeParseStringArray = Schema.parse(Schema.array(Schema.string));
 
+export const safeParseBoolean = Schema.parse(Schema.boolean);
+
 export const checkIfNoResult = <T>(result: T) =>
   !!result
     ? Effect.succeed(result)

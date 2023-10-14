@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createFilterQuery = exports.booleanFilterQuery = exports.dateFilterQuery = exports.stringFilterQuery = exports.numericalFilterQuery = void 0;
+exports.createSetQueriesAndParams = exports.createFilterQuery = exports.booleanFilterQuery = exports.dateFilterQuery = exports.stringFilterQuery = exports.numericalFilterQuery = void 0;
 const numericalFilterQuery = (paramName, filter) => `${paramName} ${filter.numericalOperator} ${filter.predicateValue}`;
 exports.numericalFilterQuery = numericalFilterQuery;
 const stringFilterQuery = (paramName, filter) => `${paramName} ${filter.stringOperatorCallback(filter.predicateValue)}`;
@@ -17,3 +17,24 @@ const createFilterQuery = (paramName, filters, formatQuery) => {
     return null;
 };
 exports.createFilterQuery = createFilterQuery;
+const addToSqlSetQueries = ({ fieldName, fieldValue, paramIndexOffset, setQueriesAndParams, }) => {
+    if (fieldValue !== undefined) {
+        const paramIndex = setQueriesAndParams.setParams.length + paramIndexOffset + 1;
+        const newSqlSetQuery = [
+            ...setQueriesAndParams.sqlSetQueries,
+            `${fieldName} = $${paramIndex}`,
+        ];
+        const newSetParams = [...setQueriesAndParams.setParams, fieldValue];
+        return Object.assign(Object.assign({}, setQueriesAndParams), { sqlSetQueries: newSqlSetQuery, setParams: newSetParams });
+    }
+    return setQueriesAndParams;
+};
+const createSetQueriesAndParams = (newUpdates, queryParamStartIndex) => {
+    return Object.entries(newUpdates).reduce((acc, [fieldName, fieldValue]) => addToSqlSetQueries({
+        fieldName,
+        fieldValue,
+        paramIndexOffset: queryParamStartIndex,
+        setQueriesAndParams: acc,
+    }), { sqlSetQueries: [], setParams: [] });
+};
+exports.createSetQueriesAndParams = createSetQueriesAndParams;

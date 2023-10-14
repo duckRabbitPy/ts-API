@@ -3,16 +3,21 @@ import * as Effect from "@effect/io/Effect";
 import * as Schema from "@effect/schema/Schema";
 import { ParameterError } from "../../../customErrors";
 
-const safeParseBoolean = Schema.parse(
+export const safeParseTrueFalseStr = Schema.parse(
   Schema.union(Schema.literal("true"), Schema.literal("false"))
 );
+
+export const safeParseBooleanString = (maybeBool: string) =>
+  pipe(
+    maybeBool,
+    safeParseTrueFalseStr,
+    Effect.flatMap((boolStr) => Effect.succeed(boolStr === "true"))
+  );
 
 const parseBooleanFilter = (maybeBoolStr: string) => {
   const safeParams = {
     booleanOperator: Effect.succeed("=" as const),
-    predicateValue: safeParseBoolean(maybeBoolStr).pipe(
-      Effect.flatMap((boolStr) => Effect.succeed(boolStr === "true"))
-    ),
+    predicateValue: safeParseBooleanString(maybeBoolStr),
   };
 
   return pipe(Effect.all(safeParams));

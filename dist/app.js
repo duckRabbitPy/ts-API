@@ -13,7 +13,7 @@ const app = (0, express_1.default)();
 app.use((0, body_parser_1.json)());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
-    res.send("This is the root route. See documentation for available endpoints");
+    res.send("This is the root route. See documentation in the readme https://github.com/duckRabbitPy/ts-API for available endpoints");
 });
 app.use("/api-v1", middleware_1.apiKeyMiddleware);
 app.use("/api-v1/todos", todos_v1_1.todoRouter);

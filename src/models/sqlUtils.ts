@@ -47,3 +47,57 @@ export const createFilterQuery = <T>(
   }
   return null;
 };
+
+const addToSqlSetQueries = ({
+  fieldName,
+  fieldValue,
+  paramIndexOffset,
+  setQueriesAndParams,
+}: {
+  fieldName: string;
+  fieldValue: string | number | boolean | undefined;
+  paramIndexOffset: number;
+  setQueriesAndParams: SetQueriesAndParams;
+}): SetQueriesAndParams => {
+  if (fieldValue !== undefined) {
+    const paramIndex =
+      setQueriesAndParams.setParams.length + paramIndexOffset + 1;
+
+    const newSqlSetQuery = [
+      ...setQueriesAndParams.sqlSetQueries,
+      `${fieldName} = $${paramIndex}`,
+    ];
+
+    const newSetParams = [...setQueriesAndParams.setParams, fieldValue];
+
+    return {
+      ...setQueriesAndParams,
+      sqlSetQueries: newSqlSetQuery,
+      setParams: newSetParams,
+    };
+  }
+
+  return setQueriesAndParams;
+};
+
+type UpdateValues = string | number | boolean | undefined;
+type SetQueriesAndParams = {
+  setParams: (string | number | boolean)[];
+  sqlSetQueries: string[];
+};
+
+export const createSetQueriesAndParams = (
+  newUpdates: Record<string, UpdateValues>,
+  queryParamStartIndex: number
+): SetQueriesAndParams => {
+  return Object.entries(newUpdates).reduce(
+    (acc, [fieldName, fieldValue]) =>
+      addToSqlSetQueries({
+        fieldName,
+        fieldValue,
+        paramIndexOffset: queryParamStartIndex,
+        setQueriesAndParams: acc,
+      }),
+    { sqlSetQueries: [], setParams: [] } as SetQueriesAndParams
+  );
+};

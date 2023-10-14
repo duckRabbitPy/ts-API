@@ -89,6 +89,16 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(yield updatedRes.json().then((res) => res.text)).toBe("updated with new text");
         }));
+        (0, bun_test_1.test)("set completed to true", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/1`, {
+                method: "PUT",
+                body: JSON.stringify({ completed: true }),
+                headers: Object.assign({ "Content-Type": "application/json" }, AUTH_HEADER),
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(200);
+            checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => res.completed)).toBe(true);
+        }));
         (0, bun_test_1.test)("update todo not found", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/111`, {
                 method: "PUT",

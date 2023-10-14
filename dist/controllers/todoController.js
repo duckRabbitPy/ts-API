@@ -96,12 +96,13 @@ const deleteToDoItem = (req, res) => {
 };
 exports.deleteToDoItem = deleteToDoItem;
 const updateToDoItem = (req, res) => {
-    var _a, _b;
+    var _a, _b, _c;
     const safeParams = {
-        id: (0, parseHelpers_1.safeParseNumber)(Number((_a = req.params) === null || _a === void 0 ? void 0 : _a.id)),
-        text: (0, parseHelpers_1.safeParseNonEmptyString)((_b = req.body) === null || _b === void 0 ? void 0 : _b.text),
+        id: (0, parseHelpers_1.safeParseNumber)(Number((_a = req.params) === null || _a === void 0 ? void 0 : _a.id)).pipe(Effect.orElseFail(() => new customErrors_1.ParameterError({ message: "Invalid id parameter" }))),
+        text: (0, parseHelpers_1.safeParseNonEmptyString)((_b = req.body) === null || _b === void 0 ? void 0 : _b.text).pipe(Effect.orElseSucceed(() => undefined)),
+        completed: (0, parseHelpers_1.safeParseBoolean)((_c = req.body) === null || _c === void 0 ? void 0 : _c.completed).pipe(Effect.orElseSucceed(() => undefined)),
     };
-    return (0, Function_1.pipe)(Effect.all(safeParams), Effect.flatMap(({ id, text }) => (0, todos_1.updateTodosQuery)(id, text)), Effect.flatMap(parseHelpers_1.checkIfNoResult), Effect.flatMap(todos_1.parseTodo), (finalEffect) => resolveResponse({
+    return (0, Function_1.pipe)(Effect.all(safeParams), Effect.flatMap(({ id, text, completed }) => (0, todos_1.updateTodosQuery)(id, text, completed)), Effect.flatMap(parseHelpers_1.checkIfNoResult), Effect.flatMap(todos_1.parseTodo), (finalEffect) => resolveResponse({
         finalEffect,
         response: res,
         successStatus: 200,

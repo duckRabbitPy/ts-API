@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIfNoResult = exports.safeParseStringArray = exports.safeParseDate = exports.safeParseNonEmptyString = exports.safeParseNumber = exports.parseDefinedFields = exports.splitOperatorAndValue = void 0;
+exports.checkIfNoResult = exports.safeParseBoolean = exports.safeParseStringArray = exports.safeParseDate = exports.safeParseNonEmptyString = exports.safeParseNumber = exports.parseDefinedFields = exports.splitOperatorAndValue = void 0;
 const effect_1 = require("effect");
 const Function_1 = require("@effect/data/Function");
 const Schema = __importStar(require("@effect/schema/Schema"));
@@ -49,6 +49,7 @@ exports.safeParseNumber = Schema.parse(Schema.number.pipe(Schema.nonNaN()));
 exports.safeParseNonEmptyString = Schema.parse(Schema.string.pipe(Schema.minLength(1)));
 exports.safeParseDate = Schema.parse(Schema.Date);
 exports.safeParseStringArray = Schema.parse(Schema.array(Schema.string));
+exports.safeParseBoolean = Schema.parse(Schema.boolean);
 const checkIfNoResult = (result) => !!result
     ? effect_1.Effect.succeed(result)
     : effect_1.Effect.fail(new customErrors_1.ItemNotFoundError({ message: "Item not found" }));

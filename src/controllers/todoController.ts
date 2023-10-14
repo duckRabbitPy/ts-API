@@ -22,6 +22,7 @@ import { safeParseDefinedFields } from "./queryParams/definedFields";
 import { safeParsePagination } from "./queryParams/pagination";
 import {
   checkIfNoResult,
+  safeParseBoolean,
   safeParseNonEmptyString,
   safeParseNumber,
 } from "./utils/parseHelpers";
@@ -31,7 +32,10 @@ import {
   ParameterError,
   PostgresError,
 } from "./customErrors";
-import { parseBooleanQueryFilter } from "./queryParams/filtering/boolean/booleanFilter";
+import {
+  parseBooleanQueryFilter,
+  safeParseBooleanString,
+} from "./queryParams/filtering/boolean/booleanFilter";
 
 export const getFilterParamsFromRequest = (req: Request) => {
   const id = parseNumericalQueryFilter(req.query.id);
@@ -143,13 +147,24 @@ export const deleteToDoItem: RequestHandler = (req, res) => {
 
 export const updateToDoItem: RequestHandler = (req, res) => {
   const safeParams = {
-    id: safeParseNumber(Number(req.params?.id)),
-    text: safeParseNonEmptyString(req.body?.text),
+    id: safeParseNumber(Number(req.params?.id)).pipe(
+      Effect.orElseFail(
+        () => new ParameterError({ message: "Invalid id parameter" })
+      )
+    ),
+    text: safeParseNonEmptyString(req.body?.text).pipe(
+      Effect.orElseSucceed(() => undefined)
+    ),
+    completed: safeParseBoolean(req.body?.completed).pipe(
+      Effect.orElseSucceed(() => undefined)
+    ),
   };
 
   return pipe(
     Effect.all(safeParams),
-    Effect.flatMap(({ id, text }) => updateTodosQuery(id, text)),
+    Effect.flatMap(({ id, text, completed }) =>
+      updateTodosQuery(id, text, completed)
+    ),
     Effect.flatMap(checkIfNoResult),
     Effect.flatMap(parseTodo),
     (finalEffect) =>

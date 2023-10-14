@@ -11,7 +11,9 @@ app.use(json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
-  res.send("This is the root route. See documentation for available endpoints");
+  res.send(
+    "This is the root route. See documentation in the readme https://github.com/duckRabbitPy/ts-API for available endpoints"
+  );
 });
 
 app.use("/api-v1", apiKeyMiddleware);
