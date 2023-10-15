@@ -63,6 +63,16 @@ function checkContentType(response) {
                 return res.message;
             })).toBe("Fail: ParameterError");
         }));
+        (0, bun_test_1.test)("only text property can be set", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}`, {
+                method: "POST",
+                body: JSON.stringify({ text: "hello", completed: true }),
+                headers: Object.assign({ "Content-Type": "application/json" }, AUTH_HEADER),
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(400);
+            yield checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => res.message)).toBe("Fail: ParameterError");
+        }));
         (0, bun_test_1.test)("create todo errors if sent to single todo endpoint", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/1`, {
                 method: "POST",
@@ -355,7 +365,7 @@ function checkContentType(response) {
             (0, bun_test_1.expect)(yield res.json().then((res) => res.message)).toBe("AuthorisationError");
         }));
         (0, bun_test_1.test)("incorrect route returns 404", () => __awaiter(void 0, void 0, void 0, function* () {
-            const res = yield fetch(`http://localhost:3000/api-v1/nonExistantEndpoint`, {
+            const res = yield fetch("http://localhost:3000/api-v1/nonExistantEndpoint", {
                 headers: AUTH_HEADER,
             });
             (0, bun_test_1.expect)(res.status).toEqual(404);

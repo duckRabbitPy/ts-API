@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIfNoResult = exports.safeParseBoolean = exports.safeParseStringArray = exports.safeParseDate = exports.safeParseNonEmptyString = exports.safeParseNumber = exports.parseDefinedFields = exports.splitOperatorAndValue = void 0;
+exports.checkNoExcessFieldsForUpdate = exports.safeParseInitFieldsFromBody = exports.checkIfNoResult = exports.safeParseBoolean = exports.safeParseStringArray = exports.safeParseDate = exports.safeParseNonEmptyString = exports.safeParseNumber = exports.parseDefinedFields = exports.splitOperatorAndValue = void 0;
 const effect_1 = require("effect");
 const Function_1 = require("@effect/data/Function");
 const Schema = __importStar(require("@effect/schema/Schema"));
@@ -50,7 +50,20 @@ exports.safeParseNonEmptyString = Schema.parse(Schema.string.pipe(Schema.minLeng
 exports.safeParseDate = Schema.parse(Schema.Date);
 exports.safeParseStringArray = Schema.parse(Schema.array(Schema.string));
 exports.safeParseBoolean = Schema.parse(Schema.boolean);
-const checkIfNoResult = (result) => !!result
+const checkIfNoResult = (result) => result
     ? effect_1.Effect.succeed(result)
     : effect_1.Effect.fail(new customErrors_1.ItemNotFoundError({ message: "Item not found" }));
 exports.checkIfNoResult = checkIfNoResult;
+const safeParseInitFieldsFromBody = (body) => Schema.parse(Schema.struct({ text: Schema.string.pipe(Schema.minLength(1)) }))(body, {
+    onExcessProperty: "error",
+});
+exports.safeParseInitFieldsFromBody = safeParseInitFieldsFromBody;
+const checkNoExcessFieldsForUpdate = (body) => Schema.parse(Schema.struct({
+    text: Schema.optional(Schema.string.pipe(Schema.minLength(1))),
+    completed: Schema.optional(Schema.boolean),
+}))(body, {
+    onExcessProperty: "error",
+}).pipe(effect_1.Effect.orElseFail(() => new customErrors_1.ParameterError({
+    message: "Invalid field parameter provided for update",
+})), effect_1.Effect.flatMap(() => effect_1.Effect.succeed(effect_1.Effect.unit)));
+exports.checkNoExcessFieldsForUpdate = checkNoExcessFieldsForUpdate;

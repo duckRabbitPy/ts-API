@@ -69,6 +69,21 @@ describe("V1 Todo Database Tests", () => {
       ).toBe("Fail: ParameterError");
     });
 
+    test("only text property can be set", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}`, {
+        method: "POST",
+        body: JSON.stringify({ text: "hello", completed: true }),
+        headers: { "Content-Type": "application/json", ...AUTH_HEADER },
+      });
+
+      expect(res.status).toEqual(400);
+      await checkContentType(res);
+
+      expect(await res.json().then((res) => res.message)).toBe(
+        "Fail: ParameterError"
+      );
+    });
+
     test("create todo errors if sent to single todo endpoint", async () => {
       const res = await fetch(`${TODOS_ENDPOINT}/1`, {
         method: "POST",
@@ -476,7 +491,7 @@ describe("V1 Todo Database Tests", () => {
 
     test("incorrect route returns 404", async () => {
       const res = await fetch(
-        `http://localhost:3000/api-v1/nonExistantEndpoint`,
+        "http://localhost:3000/api-v1/nonExistantEndpoint",
         {
           headers: AUTH_HEADER,
         }

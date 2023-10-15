@@ -49,11 +49,12 @@ exports.ToDoSchema = Schema.struct({
 exports.parseTodo = Schema.parse(exports.ToDoSchema);
 exports.parseTodoArray = Schema.parse(Schema.array(exports.ToDoSchema));
 const constructTODOWhereClause = (filters) => {
+    const { idFilter, textFilter, updatedAtFilter, completedFilter } = filters;
     const filterQueries = [
-        (0, sqlUtils_1.createFilterQuery)("id", filters.id, sqlUtils_1.numericalFilterQuery),
-        (0, sqlUtils_1.createFilterQuery)("text", filters.text, sqlUtils_1.stringFilterQuery),
-        (0, sqlUtils_1.createFilterQuery)("updated_at", filters.updated_at, sqlUtils_1.dateFilterQuery),
-        (0, sqlUtils_1.createFilterQuery)("completed", filters.completed, sqlUtils_1.booleanFilterQuery),
+        (0, sqlUtils_1.createFilterQuery)("id", idFilter, sqlUtils_1.numericalFilterQuery),
+        (0, sqlUtils_1.createFilterQuery)("text", textFilter, sqlUtils_1.stringFilterQuery),
+        (0, sqlUtils_1.createFilterQuery)("updated_at", updatedAtFilter, sqlUtils_1.dateFilterQuery),
+        (0, sqlUtils_1.createFilterQuery)("completed", completedFilter, sqlUtils_1.booleanFilterQuery),
     ];
     const validFilterQueries = filterQueries.filter(tsUtils_1.isNotNil);
     return validFilterQueries.length > 0
@@ -78,11 +79,11 @@ const createTodoQuery = (text) => {
     });
     return Effect.tryPromise({
         try: () => create(),
-        catch: (e) => new customErrors_1.PostgresError({ message: "postgres query error" }),
+        catch: () => new customErrors_1.PostgresError({ message: "postgres query error" }),
     }).pipe(Effect.retryN(1));
 };
 exports.createTodoQuery = createTodoQuery;
-const selectAllTodosQuery = (sort_by, order, filters, definedFields, pagination) => {
+const selectAllTodosQuery = ({ sort_by, order, filters, definedFields, pagination, }) => {
     const selectAll = () => __awaiter(void 0, void 0, void 0, function* () {
         const columns = definedFields.join(",");
         const whereClause = (0, exports.constructTODOWhereClause)(filters);
@@ -119,7 +120,7 @@ exports.selectTodoByIdQuery = selectTodoByIdQuery;
 const deleteByIdQuery = (id) => {
     const deleteById = () => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const result = yield connection_1.pool.query(`DELETE FROM todos WHERE id = $1 RETURNING id`, [id]);
+            const result = yield connection_1.pool.query("DELETE FROM todos WHERE id = $1 RETURNING id", [id]);
             return result.rows[0];
         }
         catch (error) {
@@ -132,7 +133,7 @@ const deleteByIdQuery = (id) => {
     });
 };
 exports.deleteByIdQuery = deleteByIdQuery;
-const updateTodosQuery = (id, text, completed) => {
+const updateTodosQuery = ({ id, text, completed, }) => {
     const newUpdates = {
         text,
         completed,

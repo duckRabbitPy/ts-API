@@ -33,18 +33,19 @@ export const parseTodo = Schema.parse(ToDoSchema);
 export const parseTodoArray = Schema.parse(Schema.array(ToDoSchema));
 
 type TODOSqlFilters = {
-  id: NumericalSQLFilter[];
-  text: StringSQLFilter[];
-  updated_at: DateSQLFilter[];
-  completed: BooleanSQLFilter[];
+  idFilter: NumericalSQLFilter[];
+  textFilter: StringSQLFilter[];
+  updatedAtFilter: DateSQLFilter[];
+  completedFilter: BooleanSQLFilter[];
 };
 
 export const constructTODOWhereClause = (filters: TODOSqlFilters) => {
+  const { idFilter, textFilter, updatedAtFilter, completedFilter } = filters;
   const filterQueries = [
-    createFilterQuery("id", filters.id, numericalFilterQuery),
-    createFilterQuery("text", filters.text, stringFilterQuery),
-    createFilterQuery("updated_at", filters.updated_at, dateFilterQuery),
-    createFilterQuery("completed", filters.completed, booleanFilterQuery),
+    createFilterQuery("id", idFilter, numericalFilterQuery),
+    createFilterQuery("text", textFilter, stringFilterQuery),
+    createFilterQuery("updated_at", updatedAtFilter, dateFilterQuery),
+    createFilterQuery("completed", completedFilter, booleanFilterQuery),
   ];
 
   const validFilterQueries = filterQueries.filter(isNotNil);
@@ -75,17 +76,23 @@ export const createTodoQuery = (text: string) => {
 
   return Effect.tryPromise({
     try: () => create(),
-    catch: (e) => new PostgresError({ message: "postgres query error" }),
+    catch: () => new PostgresError({ message: "postgres query error" }),
   }).pipe(Effect.retryN(1));
 };
 
-export const selectAllTodosQuery = (
-  sort_by: SortBy,
-  order: SortOrder,
-  filters: TODOSqlFilters,
-  definedFields: readonly string[],
-  pagination: { limit: number; offset: number }
-) => {
+export const selectAllTodosQuery = ({
+  sort_by,
+  order,
+  filters,
+  definedFields,
+  pagination,
+}: {
+  sort_by: SortBy;
+  order: SortOrder;
+  filters: TODOSqlFilters;
+  definedFields: readonly string[];
+  pagination: { limit: number; offset: number };
+}) => {
   const selectAll = async () => {
     const columns = definedFields.join(",");
     const whereClause = constructTODOWhereClause(filters);
@@ -131,7 +138,7 @@ export const deleteByIdQuery = (id: number) => {
   const deleteById = async () => {
     try {
       const result = await pool.query(
-        `DELETE FROM todos WHERE id = $1 RETURNING id`,
+        "DELETE FROM todos WHERE id = $1 RETURNING id",
         [id]
       );
 
@@ -147,11 +154,15 @@ export const deleteByIdQuery = (id: number) => {
   });
 };
 
-export const updateTodosQuery = (
-  id: number,
-  text: string | undefined,
-  completed: boolean | undefined
-) => {
+export const updateTodosQuery = ({
+  id,
+  text,
+  completed,
+}: {
+  id: number;
+  text: string | undefined;
+  completed: boolean | undefined;
+}) => {
   const newUpdates = {
     text,
     completed,

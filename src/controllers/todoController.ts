@@ -22,7 +22,9 @@ import { safeParseDefinedFields } from "./queryParams/definedFields";
 import { safeParsePagination } from "./queryParams/pagination";
 import {
   checkIfNoResult,
+  checkNoExcessFieldsForUpdate,
   safeParseBoolean,
+  safeParseInitFieldsFromBody,
   safeParseNonEmptyString,
   safeParseNumber,
 } from "./utils/parseHelpers";
@@ -32,30 +34,30 @@ import {
   ParameterError,
   PostgresError,
 } from "./customErrors";
-import {
-  parseBooleanQueryFilter,
-  safeParseBooleanString,
-} from "./queryParams/filtering/boolean/booleanFilter";
+import { parseBooleanQueryFilter } from "./queryParams/filtering/boolean/booleanFilter";
 
 export const getFilterParamsFromRequest = (req: Request) => {
-  const id = parseNumericalQueryFilter(req.query.id);
+  const idFilter = parseNumericalQueryFilter(req.query.id);
 
-  const text = parseStringQueryFilter(req.query.text);
+  const textFilter = parseStringQueryFilter(req.query.text);
 
-  const updated_at = parseDateQueryFilter(req.query.updated_at);
+  const updatedAtFilter = parseDateQueryFilter(req.query.updated_at);
 
-  const completed = parseBooleanQueryFilter(req.query.completed);
+  const completedFilter = parseBooleanQueryFilter(req.query.completed);
 
-  return pipe(Effect.all({ id, text, updated_at, completed }));
+  return pipe(
+    Effect.all({ idFilter, textFilter, updatedAtFilter, completedFilter })
+  );
 };
 
 export const createToDoItem: RequestHandler = (req, res) => {
   return pipe(
-    safeParseNonEmptyString(req.body?.text),
+    req.body,
+    safeParseInitFieldsFromBody,
     Effect.orElseFail(
-      () => new ParameterError({ message: "Invalid text input" })
+      () => new ParameterError({ message: "Invalid creat todo input" })
     ),
-    Effect.flatMap(createTodoQuery),
+    Effect.flatMap((body) => createTodoQuery(body.text)),
     Effect.flatMap(parseTodo),
     (finalEffect) =>
       resolveResponse({
@@ -69,7 +71,7 @@ export const createToDoItem: RequestHandler = (req, res) => {
 export const getAllToDoItems: RequestHandler = (req, res) => {
   const filters = getFilterParamsFromRequest(req);
 
-  const safeParams = {
+  const getSafeParams = {
     sort_by: safeParseSortByParam(req.query.sortBy).pipe(
       Effect.orElseSucceed(() => "id" as const)
     ),
@@ -89,10 +91,8 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
   };
 
   return pipe(
-    Effect.all(safeParams),
-    Effect.flatMap(({ sort_by, order, filters, definedFields, pagination }) =>
-      selectAllTodosQuery(sort_by, order, filters, definedFields, pagination)
-    ),
+    Effect.all(getSafeParams),
+    Effect.flatMap((safeParams) => selectAllTodosQuery(safeParams)),
     Effect.flatMap(parseTodoArray),
     (finalEffect) =>
       resolveResponse({
@@ -104,7 +104,7 @@ export const getAllToDoItems: RequestHandler = (req, res) => {
 };
 
 export const getToDoItem: RequestHandler = (req, res) => {
-  const safeParams = {
+  const getSafeParams = {
     id: safeParseNumber(Number(req.params?.id)).pipe(
       Effect.orElseFail(() => new ParameterError({ message: "Invalid id" }))
     ),
@@ -116,7 +116,7 @@ export const getToDoItem: RequestHandler = (req, res) => {
   };
 
   return pipe(
-    Effect.all(safeParams),
+    Effect.all(getSafeParams),
     Effect.flatMap(({ id, definedFields }) =>
       selectTodoByIdQuery(id, definedFields)
     ),
@@ -146,7 +146,7 @@ export const deleteToDoItem: RequestHandler = (req, res) => {
 };
 
 export const updateToDoItem: RequestHandler = (req, res) => {
-  const safeParams = {
+  const getSafeParams = {
     id: safeParseNumber(Number(req.params?.id)).pipe(
       Effect.orElseFail(
         () => new ParameterError({ message: "Invalid id parameter" })
@@ -161,10 +161,9 @@ export const updateToDoItem: RequestHandler = (req, res) => {
   };
 
   return pipe(
-    Effect.all(safeParams),
-    Effect.flatMap(({ id, text, completed }) =>
-      updateTodosQuery(id, text, completed)
-    ),
+    checkNoExcessFieldsForUpdate(req.body),
+    Effect.flatMap(() => Effect.all(getSafeParams)),
+    Effect.flatMap((safeParams) => updateTodosQuery(safeParams)),
     Effect.flatMap(checkIfNoResult),
     Effect.flatMap(parseTodo),
     (finalEffect) =>
@@ -221,7 +220,7 @@ function resolveResponse({
             respondWithError(response, 500, "Internal server error");
         }
         return Effect.succeed(
-          response.status(500).json(`Internal Server error`)
+          response.status(500).json("Internal Server error")
         );
       },
       onSuccess: (todos) =>

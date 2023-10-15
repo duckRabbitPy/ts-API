@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { pipe } from "@effect/data/Function";
 import * as Schema from "@effect/schema/Schema";
-import { ItemNotFoundError } from "../customErrors";
+import { ItemNotFoundError, ParameterError } from "../customErrors";
 
 export const splitOperatorAndValue = (
   filterString: string
@@ -42,6 +42,31 @@ export const safeParseStringArray = Schema.parse(Schema.array(Schema.string));
 export const safeParseBoolean = Schema.parse(Schema.boolean);
 
 export const checkIfNoResult = <T>(result: T) =>
-  !!result
+  result
     ? Effect.succeed(result)
     : Effect.fail(new ItemNotFoundError({ message: "Item not found" }));
+
+export const safeParseInitFieldsFromBody = (body: unknown) =>
+  Schema.parse(
+    Schema.struct({ text: Schema.string.pipe(Schema.minLength(1)) })
+  )(body, {
+    onExcessProperty: "error",
+  });
+
+export const checkNoExcessFieldsForUpdate = (body: unknown) =>
+  Schema.parse(
+    Schema.struct({
+      text: Schema.optional(Schema.string.pipe(Schema.minLength(1))),
+      completed: Schema.optional(Schema.boolean),
+    })
+  )(body, {
+    onExcessProperty: "error",
+  }).pipe(
+    Effect.orElseFail(
+      () =>
+        new ParameterError({
+          message: "Invalid field parameter provided for update",
+        })
+    ),
+    Effect.flatMap(() => Effect.succeed(Effect.unit))
+  );
