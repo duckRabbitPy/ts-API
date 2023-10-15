@@ -121,6 +121,22 @@ describe("V1 Todo Database Tests", () => {
       );
     });
 
+    test("errors if try to update id field", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/1`, {
+        method: "PUT",
+        body: JSON.stringify({ id: 2 }),
+        headers: { "Content-Type": "application/json", ...AUTH_HEADER },
+      });
+
+      expect(res.status).toEqual(400);
+      checkContentType(res);
+      expect(
+        await res.json().then((res) => {
+          return res.message;
+        })
+      ).toBe("Fail: ParameterError");
+    });
+
     test("set completed to true", async () => {
       const res = await fetch(`${TODOS_ENDPOINT}/1`, {
         method: "PUT",
@@ -511,6 +527,73 @@ describe("V1 Todo Database Tests", () => {
           return res.message;
         })
       ).toBe("Fail: ItemNotFoundError");
+    });
+  });
+
+  describe(":id parameter", () => {
+    test("get todo by id with invalid id", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/not_a_valid_id`, {
+        headers: AUTH_HEADER,
+      });
+      expect(res.status).toEqual(400);
+      checkContentType(res);
+      expect(
+        await res.json().then((res) => {
+          return res.message;
+        })
+      ).toBe("Fail: ParameterError");
+    });
+
+    test("get todo by id with id that does not exist", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/100`, {
+        headers: AUTH_HEADER,
+      });
+      expect(res.status).toEqual(404);
+      checkContentType(res);
+      expect(
+        await res.json().then((res) => {
+          return res.message;
+        })
+      ).toBe("Fail: ItemNotFoundError");
+    });
+
+    test("get todo by id with id that is not a number", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/not_a_valid_id`, {
+        headers: AUTH_HEADER,
+      });
+      expect(res.status).toEqual(400);
+      checkContentType(res);
+      expect(
+        await res.json().then((res) => {
+          return res.message;
+        })
+      ).toBe("Fail: ParameterError");
+    });
+
+    test("get todo by id with id that is a negative number", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/-1`, {
+        headers: AUTH_HEADER,
+      });
+      expect(res.status).toEqual(400);
+      checkContentType(res);
+      expect(
+        await res.json().then((res) => {
+          return res.message;
+        })
+      ).toBe("Fail: ParameterError");
+    });
+
+    test("get todo by id with id that is a decimal number", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/1.5`, {
+        headers: AUTH_HEADER,
+      });
+      expect(res.status).toEqual(400);
+      checkContentType(res);
+      expect(
+        await res.json().then((res) => {
+          return res.message;
+        })
+      ).toBe("Fail: ParameterError");
     });
   });
 });

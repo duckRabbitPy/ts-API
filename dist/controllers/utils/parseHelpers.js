@@ -45,7 +45,7 @@ const parseDefinedFields = (maybeDefinedFieldsString) => {
         .map((element) => element.trim()))));
 };
 exports.parseDefinedFields = parseDefinedFields;
-exports.safeParseNumber = Schema.parse(Schema.number.pipe(Schema.nonNaN()));
+exports.safeParseNumber = Schema.parse(Schema.number.pipe(Schema.positive(), Schema.int(), Schema.nonNaN()));
 exports.safeParseNonEmptyString = Schema.parse(Schema.string.pipe(Schema.minLength(1)));
 exports.safeParseDate = Schema.parse(Schema.Date);
 exports.safeParseStringArray = Schema.parse(Schema.array(Schema.string));

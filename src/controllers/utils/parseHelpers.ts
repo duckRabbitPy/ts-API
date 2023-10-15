@@ -31,7 +31,7 @@ export const parseDefinedFields = (maybeDefinedFieldsString: unknown) => {
 };
 
 export const safeParseNumber = Schema.parse(
-  Schema.number.pipe(Schema.nonNaN())
+  Schema.number.pipe(Schema.positive(), Schema.int(), Schema.nonNaN())
 );
 export const safeParseNonEmptyString = Schema.parse(
   Schema.string.pipe(Schema.minLength(1))

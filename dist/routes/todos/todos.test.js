@@ -99,6 +99,18 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(yield updatedRes.json().then((res) => res.text)).toBe("updated with new text");
         }));
+        (0, bun_test_1.test)("errors if try to update id field", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/1`, {
+                method: "PUT",
+                body: JSON.stringify({ id: 2 }),
+                headers: Object.assign({ "Content-Type": "application/json" }, AUTH_HEADER),
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(400);
+            checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => {
+                return res.message;
+            })).toBe("Fail: ParameterError");
+        }));
         (0, bun_test_1.test)("set completed to true", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/1`, {
                 method: "PUT",
@@ -379,6 +391,58 @@ function checkContentType(response) {
             (0, bun_test_1.expect)(yield res.json().then((res) => {
                 return res.message;
             })).toBe("Fail: ItemNotFoundError");
+        }));
+    });
+    (0, bun_test_1.describe)(":id parameter", () => {
+        (0, bun_test_1.test)("get todo by id with invalid id", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/not_a_valid_id`, {
+                headers: AUTH_HEADER,
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(400);
+            checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => {
+                return res.message;
+            })).toBe("Fail: ParameterError");
+        }));
+        (0, bun_test_1.test)("get todo by id with id that does not exist", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/100`, {
+                headers: AUTH_HEADER,
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(404);
+            checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => {
+                return res.message;
+            })).toBe("Fail: ItemNotFoundError");
+        }));
+        (0, bun_test_1.test)("get todo by id with id that is not a number", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/not_a_valid_id`, {
+                headers: AUTH_HEADER,
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(400);
+            checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => {
+                return res.message;
+            })).toBe("Fail: ParameterError");
+        }));
+        (0, bun_test_1.test)("get todo by id with id that is a negative number", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/-1`, {
+                headers: AUTH_HEADER,
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(400);
+            checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => {
+                return res.message;
+            })).toBe("Fail: ParameterError");
+        }));
+        (0, bun_test_1.test)("get todo by id with id that is a decimal number", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/1.5`, {
+                headers: AUTH_HEADER,
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(400);
+            checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => {
+                return res.message;
+            })).toBe("Fail: ParameterError");
         }));
     });
 });
