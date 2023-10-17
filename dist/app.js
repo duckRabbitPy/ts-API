@@ -8,12 +8,16 @@ const express_1 = __importDefault(require("express"));
 const todos_v1_1 = require("./routes/todos/todos_v1");
 const body_parser_1 = require("body-parser");
 const middleware_1 = require("./routes/middleware");
+const path_1 = __importDefault(require("path"));
 const PORT = ((_a = process.env) === null || _a === void 0 ? void 0 : _a.PORT) || 3000;
 const app = (0, express_1.default)();
 app.use((0, body_parser_1.json)());
 app.use(express_1.default.urlencoded({ extended: true }));
-app.get("/", (req, res) => {
-    res.send("This is the root route. See documentation in the readme https://github.com/duckRabbitPy/ts-API for available endpoints");
+app.get("/", (_, res) => {
+    res.sendFile(path_1.default.join(__dirname, "../docs/api-v1/index.html"));
+});
+app.get("/docs/api-v1/open-api.yaml", (_, res) => {
+    res.sendFile(path_1.default.join(__dirname, "../docs/api-v1/open-api.yaml"));
 });
 app.use("/api-v1", middleware_1.apiKeyMiddleware);
 app.use("/api-v1/todos", todos_v1_1.todoRouter);

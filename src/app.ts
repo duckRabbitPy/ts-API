@@ -12,11 +12,11 @@ app.use(json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (_, res) => {
-  res.sendFile(path.join(__dirname, "/docs/index.html"));
+  res.sendFile(path.join(__dirname, "../docs/api-v1/index.html"));
 });
 
-app.get("/docs/api-v1.yaml", (_, res) => {
-  res.sendFile(path.join(__dirname, "/docs/api-v1.yaml"));
+app.get("/docs/api-v1/open-api.yaml", (_, res) => {
+  res.sendFile(path.join(__dirname, "../docs/api-v1/open-api.yaml"));
 });
 
 app.use("/api-v1", apiKeyMiddleware);

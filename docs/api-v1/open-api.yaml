@@ -3,7 +3,8 @@ info:
   title: Todo App API
   version: "1.0"
 servers:
-  - url: http://localhost:3000/api-v1
+  - url: http://localhost:3000/api-v1 # Development Server
+  - url: https://effect-api.onrender.com/ # Production Server
 
 components:
   schemas:
@@ -20,10 +21,18 @@ components:
           type: string
           format: date-time
 
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: x-api-key
+      in: header
+
 paths:
   /todos:
     get:
       summary: Get a list of all Todo items.
+      security:
+        - api_key: []
       parameters:
         - name: id
           in: query
@@ -41,7 +50,7 @@ paths:
             pattern: ^(contains|startsWith|endsWith|eq):.*$
         - name: updated_at
           in: query
-          description: Filter date fields in the format 'updated_at=condition:value e.g. updated_at=before:2023-09-30T16:26:51.041Z for updated_at before 2023-09-30T16:26:51.041Z' Conditions = eq, before, after
+          description: Filter by updated_at field in the format 'updated_at=condition:value e.g. updated_at=before:2023-09-30T16:26:51.041Z for updated_at before 2023-09-30T16:26:51.041Z' Conditions = eq, before, after
           required: false
           schema:
             type: string
@@ -136,6 +145,8 @@ paths:
           type: integer
     get:
       summary: Get a Todo item by ID.
+      security:
+        - api_key: []
       responses:
         "200":
           description: Todo item retrieved successfully
@@ -152,6 +163,8 @@ paths:
 
     put:
       summary: Update a Todo item by ID.
+      security:
+        - api_key: []
       responses:
         "200":
           description: Todo item updated successfully
@@ -168,6 +181,8 @@ paths:
 
     delete:
       summary: Delete a Todo item by ID.
+      security:
+        - api_key: []
       responses:
         "204":
           description: Todo item deleted successfully
