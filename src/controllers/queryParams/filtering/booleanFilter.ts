@@ -1,7 +1,7 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
 import * as Schema from "@effect/schema/Schema";
-import { ParameterError } from "../../../customErrors";
+import { ParameterError } from "../../customErrors";
 
 export const safeParseTrueFalseStr = Schema.parse(
   Schema.union(Schema.literal("true"), Schema.literal("false"))
@@ -23,7 +23,7 @@ const parseBooleanFilter = (maybeBoolStr: string) => {
   return pipe(Effect.all(safeParams));
 };
 
-export const parseBooleanQueryFilter = (maybeFilter: unknown) => {
+export const parseBooleanFieldFilter = (maybeFilter: unknown) => {
   if (typeof maybeFilter === "string") {
     return Effect.all([
       pipe(

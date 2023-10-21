@@ -59,11 +59,11 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => {
-                return res.message;
-            })).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid input in request body. Expected {text: string} (non-empty)");
         }));
-        (0, bun_test_1.test)("only text property can be set", () => __awaiter(void 0, void 0, void 0, function* () {
+        (0, bun_test_1.test)("only text property can be set when creating a new todo", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}`, {
                 method: "POST",
                 body: JSON.stringify({ text: "hello", completed: true }),
@@ -71,7 +71,9 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             yield checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => res.message)).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid input in request body. Expected {text: string} (non-empty)");
         }));
         (0, bun_test_1.test)("create todo errors if sent to single todo endpoint", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/1`, {
@@ -107,9 +109,9 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => {
-                return res.message;
-            })).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid parameter in request body. One of the fields specified is not allowed to be updated");
         }));
         (0, bun_test_1.test)("set completed to true", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/1`, {
@@ -200,6 +202,17 @@ function checkContentType(response) {
         }));
         (0, bun_test_1.test)("get by id only returns defined fields", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/2?fields=%5Btext,%20id%5D`, {
+                headers: AUTH_HEADER,
+            });
+            (0, bun_test_1.expect)(res.status).toEqual(200);
+            yield checkContentType(res);
+            (0, bun_test_1.expect)(yield res.json().then((res) => res)).toMatchObject({
+                id: seed_1.TODO_SEED_VALUES.todos[1].id,
+                text: seed_1.TODO_SEED_VALUES.todos[1].text,
+            });
+        }));
+        (0, bun_test_1.test)("if user forgets to add id to defined fields array it is implied because required arg", () => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield fetch(`${TODOS_ENDPOINT}/2?fields=%5Btext%5D`, {
                 headers: AUTH_HEADER,
             });
             (0, bun_test_1.expect)(res.status).toEqual(200);
@@ -362,7 +375,9 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             yield checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => res.message)).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid date filter");
         }));
     });
     (0, bun_test_1.describe)("Error handling", () => {
@@ -400,9 +415,9 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => {
-                return res.message;
-            })).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid input for request parameter /:id. Expected a number");
         }));
         (0, bun_test_1.test)("get todo by id with id that does not exist", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/100`, {
@@ -420,9 +435,9 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => {
-                return res.message;
-            })).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid input for request parameter /:id. Expected a number");
         }));
         (0, bun_test_1.test)("get todo by id with id that is a negative number", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/-1`, {
@@ -430,9 +445,9 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => {
-                return res.message;
-            })).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid input for request parameter /:id. Expected a number");
         }));
         (0, bun_test_1.test)("get todo by id with id that is a decimal number", () => __awaiter(void 0, void 0, void 0, function* () {
             const res = yield fetch(`${TODOS_ENDPOINT}/1.5`, {
@@ -440,9 +455,9 @@ function checkContentType(response) {
             });
             (0, bun_test_1.expect)(res.status).toEqual(400);
             checkContentType(res);
-            (0, bun_test_1.expect)(yield res.json().then((res) => {
-                return res.message;
-            })).toBe("Fail: ParameterError");
+            const resJson = yield res.json().then((res) => res);
+            (0, bun_test_1.expect)(resJson.message).toBe("Fail: ParameterError");
+            (0, bun_test_1.expect)(resJson.info).toBe("Invalid input for request parameter /:id. Expected a number");
         }));
     });
 });

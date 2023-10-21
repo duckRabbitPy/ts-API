@@ -103,6 +103,16 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Todo"
+        "400":
+          description: "Fail: ParameterError"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
         "401":
           description: Unauthorized
         "500":
@@ -131,6 +141,14 @@ paths:
                 $ref: "#/components/schemas/Todo"
         "400":
           description: "Fail: ParameterError"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
         "401":
           description: Unauthorized
         "500":
@@ -154,6 +172,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Todo"
+        "400":
+          description: "Fail: ParameterError"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
         "401":
           description: Unauthorized
         "404":
@@ -174,6 +202,14 @@ paths:
                 $ref: "#/components/schemas/Todo"
         "400":
           description: "Fail: ParameterError"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
         "401":
           description: Unauthorized
         "500":
@@ -188,6 +224,16 @@ paths:
           description: Todo item deleted successfully
         "404":
           description: Todo item not found
+        "400":
+          description: "Fail: ParameterError"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
         "401":
           description: Unauthorized
         "500":

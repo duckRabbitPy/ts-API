@@ -62,14 +62,15 @@ describe("V1 Todo Database Tests", () => {
 
       expect(res.status).toEqual(400);
       checkContentType(res);
-      expect(
-        await res.json().then((res) => {
-          return res.message;
-        })
-      ).toBe("Fail: ParameterError");
+
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe(
+        "Invalid input in request body. Expected {text: string} (non-empty)"
+      );
     });
 
-    test("only text property can be set", async () => {
+    test("only text property can be set when creating a new todo", async () => {
       const res = await fetch(`${TODOS_ENDPOINT}`, {
         method: "POST",
         body: JSON.stringify({ text: "hello", completed: true }),
@@ -79,8 +80,10 @@ describe("V1 Todo Database Tests", () => {
       expect(res.status).toEqual(400);
       await checkContentType(res);
 
-      expect(await res.json().then((res) => res.message)).toBe(
-        "Fail: ParameterError"
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe(
+        "Invalid input in request body. Expected {text: string} (non-empty)"
       );
     });
 
@@ -130,11 +133,12 @@ describe("V1 Todo Database Tests", () => {
 
       expect(res.status).toEqual(400);
       checkContentType(res);
-      expect(
-        await res.json().then((res) => {
-          return res.message;
-        })
-      ).toBe("Fail: ParameterError");
+
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe(
+        "Invalid parameter in request body. One of the fields specified is not allowed to be updated"
+      );
     });
 
     test("set completed to true", async () => {
@@ -257,6 +261,19 @@ describe("V1 Todo Database Tests", () => {
 
     test("get by id only returns defined fields", async () => {
       const res = await fetch(`${TODOS_ENDPOINT}/2?fields=%5Btext,%20id%5D`, {
+        headers: AUTH_HEADER,
+      });
+      expect(res.status).toEqual(200);
+      await checkContentType(res);
+
+      expect(await res.json().then((res) => res)).toMatchObject({
+        id: TODO_SEED_VALUES.todos[1].id,
+        text: TODO_SEED_VALUES.todos[1].text,
+      });
+    });
+
+    test("if user forgets to add id to defined fields array it is implied because required arg", async () => {
+      const res = await fetch(`${TODOS_ENDPOINT}/2?fields=%5Btext%5D`, {
         headers: AUTH_HEADER,
       });
       expect(res.status).toEqual(200);
@@ -484,9 +501,9 @@ describe("V1 Todo Database Tests", () => {
       expect(res.status).toEqual(400);
       await checkContentType(res);
 
-      expect(await res.json().then((res) => res.message)).toBe(
-        "Fail: ParameterError"
-      );
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe("Invalid date filter");
     });
   });
 
@@ -537,11 +554,12 @@ describe("V1 Todo Database Tests", () => {
       });
       expect(res.status).toEqual(400);
       checkContentType(res);
-      expect(
-        await res.json().then((res) => {
-          return res.message;
-        })
-      ).toBe("Fail: ParameterError");
+
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe(
+        "Invalid input for request parameter /:id. Expected a number"
+      );
     });
 
     test("get todo by id with id that does not exist", async () => {
@@ -563,11 +581,12 @@ describe("V1 Todo Database Tests", () => {
       });
       expect(res.status).toEqual(400);
       checkContentType(res);
-      expect(
-        await res.json().then((res) => {
-          return res.message;
-        })
-      ).toBe("Fail: ParameterError");
+
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe(
+        "Invalid input for request parameter /:id. Expected a number"
+      );
     });
 
     test("get todo by id with id that is a negative number", async () => {
@@ -576,11 +595,11 @@ describe("V1 Todo Database Tests", () => {
       });
       expect(res.status).toEqual(400);
       checkContentType(res);
-      expect(
-        await res.json().then((res) => {
-          return res.message;
-        })
-      ).toBe("Fail: ParameterError");
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe(
+        "Invalid input for request parameter /:id. Expected a number"
+      );
     });
 
     test("get todo by id with id that is a decimal number", async () => {
@@ -589,11 +608,11 @@ describe("V1 Todo Database Tests", () => {
       });
       expect(res.status).toEqual(400);
       checkContentType(res);
-      expect(
-        await res.json().then((res) => {
-          return res.message;
-        })
-      ).toBe("Fail: ParameterError");
+      const resJson = await res.json().then((res) => res);
+      expect(resJson.message).toBe("Fail: ParameterError");
+      expect(resJson.info).toBe(
+        "Invalid input for request parameter /:id. Expected a number"
+      );
     });
   });
 });

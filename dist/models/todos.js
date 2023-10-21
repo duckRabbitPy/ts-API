@@ -38,7 +38,7 @@ const Effect = __importStar(require("@effect/io/Effect"));
 const connection_1 = require("../db/connection");
 const customErrors_1 = require("../controllers/customErrors");
 const sqlUtils_1 = require("./sqlUtils");
-const tsUtils_1 = require("../commonUtils/tsUtils");
+const tsUtils_1 = require("../sharedUtils.ts/tsUtils");
 // this is the /todos API _return_ type for a todo not the database schema type
 exports.ToDoSchema = Schema.struct({
     id: Schema.number,
@@ -101,7 +101,7 @@ const selectAllTodosQuery = ({ sort_by, order, filters, definedFields, paginatio
     });
 };
 exports.selectAllTodosQuery = selectAllTodosQuery;
-const selectTodoByIdQuery = (id, definedFields) => {
+const selectTodoByIdQuery = ({ id, definedFields, }) => {
     const selectById = () => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const result = yield connection_1.pool.query(`SELECT ${definedFields.join(",")} FROM todos WHERE id = $1`, [id]);

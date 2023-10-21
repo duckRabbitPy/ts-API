@@ -27,7 +27,7 @@ exports.parseBooleanFieldFilter = exports.safeParseBooleanString = exports.safeP
 const Function_1 = require("@effect/data/Function");
 const Effect = __importStar(require("@effect/io/Effect"));
 const Schema = __importStar(require("@effect/schema/Schema"));
-const customErrors_1 = require("../../../customErrors");
+const customErrors_1 = require("../../customErrors");
 exports.safeParseTrueFalseStr = Schema.parse(Schema.union(Schema.literal("true"), Schema.literal("false")));
 const safeParseBooleanString = (maybeBool) => (0, Function_1.pipe)(maybeBool, exports.safeParseTrueFalseStr, Effect.flatMap((boolStr) => Effect.succeed(boolStr === "true")));
 exports.safeParseBooleanString = safeParseBooleanString;

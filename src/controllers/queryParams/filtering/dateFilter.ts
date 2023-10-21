@@ -1,15 +1,27 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
 
-import {
-  dateOperatorSqlMapping,
-  safeParseDateOperator,
-} from "./dateComparison";
-import {
-  safeParseDate,
-  splitOperatorAndValue,
-} from "../../../utils/parseHelpers";
-import { ParameterError } from "../../../customErrors";
+import { splitOperatorAndValue } from "./splitOperatorAndValue";
+import { ParameterError } from "../../customErrors";
+import * as Schema from "@effect/schema/Schema";
+import { safeParseDate } from "../../../sharedUtils.ts/primitiveParsers";
+
+export const dateOperatorSqlMapping = {
+  eq: "=",
+  after: ">",
+  before: "<",
+} as DateOperatorOperatorMap;
+
+export const dateOperatorMapSchema = Schema.struct({
+  eq: Schema.literal("="),
+  after: Schema.literal(">"),
+  before: Schema.literal("<"),
+});
+
+export const dateOperator = Schema.keyof(dateOperatorMapSchema);
+export type DateOperatorOperatorMap = Schema.To<typeof dateOperatorMapSchema>;
+
+export const safeParseDateOperator = Schema.parse(dateOperator);
 
 const parseColonDelimitedDateFilterString = (filterString: string) => {
   const [operator, value] = splitOperatorAndValue(filterString);
@@ -30,7 +42,7 @@ const parseColonDelimitedDateFilterString = (filterString: string) => {
   );
 };
 
-export const parseDateQueryFilter = (maybeFilter: unknown) => {
+export const parseDateFieldFilter = (maybeFilter: unknown) => {
   if (typeof maybeFilter === "string") {
     return Effect.all([
       pipe(

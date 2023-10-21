@@ -23,20 +23,29 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseStringFieldFilter = void 0;
+exports.parseStringFieldFilter = exports.safeParseStringOperator = exports.stringOperatorSqlMapping = void 0;
 const Function_1 = require("@effect/data/Function");
 const Effect = __importStar(require("@effect/io/Effect"));
-const stringComparison_1 = require("./stringComparison");
-const parseHelpers_1 = require("../../../utils/parseHelpers");
-const customErrors_1 = require("../../../customErrors");
+const Schema = __importStar(require("@effect/schema/Schema"));
+const splitOperatorAndValue_1 = require("./splitOperatorAndValue");
+const customErrors_1 = require("../../customErrors");
+const primitiveParsers_1 = require("../../../sharedUtils.ts/primitiveParsers");
+exports.stringOperatorSqlMapping = {
+    contains: (a) => `LIKE '%${a}%'`,
+    startsWith: (a) => `LIKE '${a}%'`,
+    endsWith: (a) => `LIKE '%${a}'`,
+    eq: (a) => `= '${a}'`,
+};
+const stringOperatorSchema = Schema.union(Schema.literal("contains"), Schema.literal("startsWith"), Schema.literal("endsWith"), Schema.literal("eq"));
+exports.safeParseStringOperator = Schema.parse(stringOperatorSchema);
 const parseColonDelimitedStringFilter = (filterString) => {
-    const [operator, value] = (0, parseHelpers_1.splitOperatorAndValue)(filterString);
+    const [operator, value] = (0, splitOperatorAndValue_1.splitOperatorAndValue)(filterString);
     const safeParams = {
-        stringOperator: (0, stringComparison_1.safeParseStringOperator)(operator),
-        predicateValue: (0, parseHelpers_1.safeParseNonEmptyString)(value),
+        stringOperator: (0, exports.safeParseStringOperator)(operator),
+        predicateValue: (0, primitiveParsers_1.safeParseNonEmptyString)(value),
     };
     return (0, Function_1.pipe)(Effect.all(safeParams), Effect.flatMap(({ stringOperator, predicateValue }) => Effect.succeed({
-        stringOperatorCallback: stringComparison_1.stringOperatorSqlMapping[stringOperator],
+        stringOperatorCallback: exports.stringOperatorSqlMapping[stringOperator],
         predicateValue,
     })));
 };

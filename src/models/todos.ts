@@ -16,7 +16,7 @@ import {
   numericalFilterQuery,
   stringFilterQuery,
 } from "./sqlUtils";
-import { isNotNil } from "../commonUtils/tsUtils";
+import { isNotNil } from "../sharedUtils.ts/tsUtils";
 
 // this is the /todos API _return_ type for a todo not the database schema type
 export const ToDoSchema = Schema.struct({
@@ -112,10 +112,13 @@ export const selectAllTodosQuery = ({
   });
 };
 
-export const selectTodoByIdQuery = (
-  id: number,
-  definedFields: readonly string[]
-) => {
+export const selectTodoByIdQuery = ({
+  id,
+  definedFields,
+}: {
+  id: number;
+  definedFields: readonly string[];
+}) => {
   const selectById = async () => {
     try {
       const result = await pool.query(

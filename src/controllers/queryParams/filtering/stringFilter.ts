@@ -1,16 +1,26 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
+import * as Schema from "@effect/schema/Schema";
 
-import {
-  safeParseStringOperator,
-  stringOperatorSqlMapping,
-} from "./stringComparison";
+import { splitOperatorAndValue } from "./splitOperatorAndValue";
+import { ParameterError } from "../../customErrors";
+import { safeParseNonEmptyString } from "../../../sharedUtils.ts/primitiveParsers";
 
-import {
-  splitOperatorAndValue,
-  safeParseNonEmptyString,
-} from "../../../utils/parseHelpers";
-import { ParameterError } from "../../../customErrors";
+export const stringOperatorSqlMapping = {
+  contains: (a: string) => `LIKE '%${a}%'` as const,
+  startsWith: (a: string) => `LIKE '${a}%'` as const,
+  endsWith: (a: string) => `LIKE '%${a}'` as const,
+  eq: (a: string) => `= '${a}'` as const,
+} as const;
+
+const stringOperatorSchema = Schema.union(
+  Schema.literal("contains"),
+  Schema.literal("startsWith"),
+  Schema.literal("endsWith"),
+  Schema.literal("eq")
+);
+
+export const safeParseStringOperator = Schema.parse(stringOperatorSchema);
 
 const parseColonDelimitedStringFilter = (filterString: string) => {
   const [operator, value] = splitOperatorAndValue(filterString);
@@ -30,7 +40,7 @@ const parseColonDelimitedStringFilter = (filterString: string) => {
   );
 };
 
-export const parseStringFilter = (maybeFilter: unknown) => {
+export const parseStringFieldFilter = (maybeFilter: unknown) => {
   if (typeof maybeFilter === "string") {
     return Effect.all([
       pipe(

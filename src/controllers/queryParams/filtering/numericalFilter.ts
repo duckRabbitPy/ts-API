@@ -1,15 +1,31 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
+import * as Schema from "@effect/schema/Schema";
 
-import {
-  safeParseNumericalOperator,
-  numericalOperatorSqlMapping,
-} from "./numberComparison";
-import {
-  splitOperatorAndValue,
-  safeParseNumber,
-} from "../../../utils/parseHelpers";
-import { ParameterError } from "../../../customErrors";
+import { splitOperatorAndValue } from "./splitOperatorAndValue";
+import { ParameterError } from "../../customErrors";
+import { safeParseNumber } from "../../../sharedUtils.ts/primitiveParsers";
+
+export const numericalOperatorSqlMapping = {
+  eq: "=",
+  gt: ">",
+  gte: ">=",
+  lt: "<",
+  lte: "<=",
+} as NumericalOperatorMap;
+
+export const numericalOperatorMapSchema = Schema.struct({
+  eq: Schema.literal("="),
+  gt: Schema.literal(">"),
+  gte: Schema.literal(">="),
+  lt: Schema.literal("<"),
+  lte: Schema.literal("<="),
+});
+
+export const numericalOperator = Schema.keyof(numericalOperatorMapSchema);
+
+export type NumericalOperatorMap = Schema.To<typeof numericalOperatorMapSchema>;
+export const safeParseNumericalOperator = Schema.parse(numericalOperator);
 
 const parseColonDelimitedNumberFilter = (filterString: string) => {
   const [operator, value] = splitOperatorAndValue(filterString);
@@ -29,7 +45,7 @@ const parseColonDelimitedNumberFilter = (filterString: string) => {
   );
 };
 
-export const parseNumericalQueryFilter = (maybeFilter: unknown) => {
+export const parseNumericalFieldFilter = (maybeFilter: unknown) => {
   if (typeof maybeFilter === "string") {
     return Effect.all([
       pipe(

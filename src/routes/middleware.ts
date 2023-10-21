@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { pipe } from "@effect/data/Function";
-import { safeParseNonEmptyString } from "../controllers/utils/parseHelpers";
+
 import { Effect } from "effect";
 import { AuthorisationError } from "../controllers/customErrors";
+import { safeParseNonEmptyString } from "../sharedUtils.ts/primitiveParsers";
 
 const validateApiKey = (apiKey: string) => {
   return apiKey === process.env.API_KEY;

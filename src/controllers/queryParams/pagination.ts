@@ -1,7 +1,7 @@
 import { pipe, Effect } from "effect";
 
 import { Request } from "express";
-import { safeParseNumber } from "../utils/parseHelpers";
+import { safeParseNumber } from "../../sharedUtils.ts/primitiveParsers";
 
 export const safeParsePagination = (queryParams: Request) => {
   return pipe(

@@ -23,20 +23,37 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseNumericalFieldFilter = void 0;
+exports.parseNumericalFieldFilter = exports.safeParseNumericalOperator = exports.numericalOperator = exports.numericalOperatorMapSchema = exports.numericalOperatorSqlMapping = void 0;
 const Function_1 = require("@effect/data/Function");
 const Effect = __importStar(require("@effect/io/Effect"));
-const numberComparison_1 = require("./numberComparison");
-const parseHelpers_1 = require("../../../utils/parseHelpers");
-const customErrors_1 = require("../../../customErrors");
+const Schema = __importStar(require("@effect/schema/Schema"));
+const splitOperatorAndValue_1 = require("./splitOperatorAndValue");
+const customErrors_1 = require("../../customErrors");
+const primitiveParsers_1 = require("../../../sharedUtils.ts/primitiveParsers");
+exports.numericalOperatorSqlMapping = {
+    eq: "=",
+    gt: ">",
+    gte: ">=",
+    lt: "<",
+    lte: "<=",
+};
+exports.numericalOperatorMapSchema = Schema.struct({
+    eq: Schema.literal("="),
+    gt: Schema.literal(">"),
+    gte: Schema.literal(">="),
+    lt: Schema.literal("<"),
+    lte: Schema.literal("<="),
+});
+exports.numericalOperator = Schema.keyof(exports.numericalOperatorMapSchema);
+exports.safeParseNumericalOperator = Schema.parse(exports.numericalOperator);
 const parseColonDelimitedNumberFilter = (filterString) => {
-    const [operator, value] = (0, parseHelpers_1.splitOperatorAndValue)(filterString);
+    const [operator, value] = (0, splitOperatorAndValue_1.splitOperatorAndValue)(filterString);
     const safeParams = {
-        numericalOperator: (0, numberComparison_1.safeParseNumericalOperator)(operator),
-        predicateValue: (0, parseHelpers_1.safeParseNumber)(Number(value)),
+        numericalOperator: (0, exports.safeParseNumericalOperator)(operator),
+        predicateValue: (0, primitiveParsers_1.safeParseNumber)(Number(value)),
     };
     return (0, Function_1.pipe)(Effect.all(safeParams), Effect.flatMap(({ numericalOperator, predicateValue }) => Effect.succeed({
-        numericalOperator: numberComparison_1.numericalOperatorSqlMapping[numericalOperator],
+        numericalOperator: exports.numericalOperatorSqlMapping[numericalOperator],
         predicateValue,
     })));
 };
