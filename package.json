@@ -23,7 +23,7 @@
   "main": "app.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "node dist/server.js",
     "dev": "NODE_ENV=development nodemon --exec ts-node ./src/server.ts",
     "lint": "eslint --ext .ts src",
     "test": "vitest run",
