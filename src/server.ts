@@ -3,25 +3,28 @@ import { todoRouter as todoRouterV1 } from "./routes/todos/todos_v1";
 import { json } from "body-parser";
 import { apiKeyMiddleware } from "./routes/middleware";
 import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const PORT = process.env?.PORT || 3000;
 
-const app = express();
+const server = express();
 
-app.use(json());
-app.use(express.urlencoded({ extended: true }));
+server.use(json());
+server.use(express.urlencoded({ extended: true }));
 
-app.get("/", (_, res) => {
+server.get("/", (_, res) => {
   res.sendFile(path.join(__dirname, "../docs/api-v1/index.html"));
 });
 
-app.get("/docs/api-v1/open-api.yaml", (_, res) => {
+server.get("/docs/api-v1/open-api.yaml", (_, res) => {
   res.sendFile(path.join(__dirname, "../docs/api-v1/open-api.yaml"));
 });
 
-app.use("/api-v1", apiKeyMiddleware);
-app.use("/api-v1/todos", todoRouterV1);
+server.use("/api-v1", apiKeyMiddleware);
+server.use("/api-v1/todos", todoRouterV1);
 
 console.log("\x1b[42m", `listening on port ${PORT}`, "\x1b[0m");
 
-app.listen(PORT);
+server.listen(PORT);

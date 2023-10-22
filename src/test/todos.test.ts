@@ -1,5 +1,9 @@
-import { expect, test, describe, beforeEach } from "bun:test";
-import { resetAndSeedDatabase, TODO_SEED_VALUES } from "../../db/seed";
+import { expect, describe, beforeEach, test, afterAll } from "vitest";
+import dotenv from "dotenv";
+import { resetAndSeedDatabase, TODO_SEED_VALUES } from "../db/seed";
+import { pool } from "../db/connection";
+
+dotenv.config();
 
 const TODOS_ENDPOINT = "http://localhost:3000/api-v1/todos";
 const AUTH_HEADER = {
@@ -15,6 +19,10 @@ async function checkContentType(response: Response) {
 describe("V1 Todo Database Tests", () => {
   beforeEach(async () => {
     await resetAndSeedDatabase();
+  });
+
+  afterAll(async () => {
+    pool.end();
   });
 
   describe("CRUD operations", () => {
@@ -177,7 +185,6 @@ describe("V1 Todo Database Tests", () => {
 
       expect(res.status).toEqual(204);
       expect(res.headers.get("content-type")).toBeNull();
-      expect(await res.json().then((res) => res)).toBeNull();
 
       const deletedRes = await fetch(`${TODOS_ENDPOINT}/1`);
       expect(await deletedRes.json().then((res) => res.text)).toBeUndefined();

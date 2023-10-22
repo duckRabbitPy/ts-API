@@ -4,6 +4,9 @@ import { pipe } from "@effect/data/Function";
 import { Effect } from "effect";
 import { AuthorisationError } from "../controllers/customErrors";
 import { safeParseNonEmptyString } from "../sharedUtils.ts/primitiveParsers";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const validateApiKey = (apiKey: string) => {
   return apiKey === process.env.API_KEY;
