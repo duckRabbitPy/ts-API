@@ -93,6 +93,7 @@ ALTER DATABASE effect_pg_dev SET timezone TO 'UTC';
 ## TODOS API
 
 Available at: https://effect-api.onrender.com/
+(note has long cold start as on free tier, once first request is served it runs well 😁 )
 
 set the auth header x-api-key to the API_KEY variable when making requests
 
